@@ -10,10 +10,12 @@ License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.3
-Imports:
-    terra,
-    geosphere,
-    methods
-Suggests: 
-    testthat (>= 3.0.0)
+Imports: terra, geosphere, methods
+Suggests: testthat (>= 3.0.0)
 Config/testthat/edition: 3
+NeedsCompilation: no
+Packaged: 2026-01-06 12:48:44 UTC; gabriel
+Author: Gabriel Ortega-Solis [aut, cre] (ORCID:
+    <https://orcid.org/0000-0002-0516-5694>)
+Maintainer: Gabriel Ortega-Solis <g.ortega.solis@gmail.com>
+Built: R 4.5.2; ; 2026-01-06 12:48:55 UTC; unix

@@ -1,0 +1,187 @@
+pkgname <- "geomattR"
+source(file.path(R.home("share"), "R", "examples-header.R"))
+options(warn = 1)
+library('geomattR')
+
+base::assign(".oldSearch", base::search(), pos = 'CheckExEnv')
+base::assign(".old_wd", base::getwd(), pos = 'CheckExEnv')
+cleanEx()
+nameEx("calc_elongation")
+### * calc_elongation
+
+flush(stderr()); flush(stdout())
+
+### Name: calc_elongation
+### Title: Calculate Elongation Ratio from Minimum Bounding Rectangle
+### Aliases: calc_elongation
+
+### ** Examples
+
+## Not run: 
+##D library(terra)
+##D polygon <- vect("path/to/polygon.shp")
+##D elongation <- calc_elongation(polygon)
+## End(Not run)
+
+
+
+cleanEx()
+nameEx("calc_extent_ew")
+### * calc_extent_ew
+
+flush(stderr()); flush(stdout())
+
+### Name: calc_extent_ew
+### Title: Calculate East-West Extent
+### Aliases: calc_extent_ew
+
+### ** Examples
+
+## Not run: 
+##D library(terra)
+##D polygon <- vect("path/to/polygon.shp")
+##D ew_extent <- calc_extent_ew(polygon)
+## End(Not run)
+
+
+
+cleanEx()
+nameEx("calc_extent_ns")
+### * calc_extent_ns
+
+flush(stderr()); flush(stdout())
+
+### Name: calc_extent_ns
+### Title: Calculate North-South Extent
+### Aliases: calc_extent_ns
+
+### ** Examples
+
+## Not run: 
+##D library(terra)
+##D polygon <- vect("path/to/polygon.shp")
+##D ns_extent <- calc_extent_ns(polygon)
+## End(Not run)
+
+
+
+cleanEx()
+nameEx("calculate_geometric_attributes")
+### * calculate_geometric_attributes
+
+flush(stderr()); flush(stdout())
+
+### Name: calculate_geometric_attributes
+### Title: Calculate Geometric Attributes of Spatial Polygons
+### Aliases: calculate_geometric_attributes
+
+### ** Examples
+
+## Not run: 
+##D library(terra)
+##D 
+##D # Load a polygon shapefile (single or multiple features)
+##D polygons <- vect("path/to/polygons.shp")
+##D 
+##D # Calculate all geometric attributes (processes sequentially)
+##D polygons_with_attrs <- calculate_geometric_attributes(polygons)
+##D 
+##D # Calculate specific metrics only
+##D polygons_subset <- calculate_geometric_attributes(polygons, 
+##D                      metrics = c("area", "perimeter", "compactness"))
+##D 
+##D # View the results
+##D print(polygons_with_attrs)
+## End(Not run)
+
+
+
+cleanEx()
+nameEx("calculate_geometric_attributes_parallel")
+### * calculate_geometric_attributes_parallel
+
+flush(stderr()); flush(stdout())
+
+### Name: calculate_geometric_attributes_parallel
+### Title: Calculate Geometric Attributes in Parallel
+### Aliases: calculate_geometric_attributes_parallel
+
+### ** Examples
+
+## Not run: 
+##D library(terra)
+##D 
+##D # Load multiple polygons
+##D polygons <- vect("path/to/polygons.shp")
+##D 
+##D # Process sequentially (default)
+##D result <- calculate_geometric_attributes_parallel(polygons)
+##D 
+##D # Process in parallel with explicit cluster
+##D cl <- parallel::makeCluster(parallel::detectCores() - 1)
+##D result <- calculate_geometric_attributes_parallel(polygons, cl = cl)
+##D parallel::stopCluster(cl)
+## End(Not run)
+
+
+
+cleanEx()
+nameEx("calculate_geometric_attributes_single")
+### * calculate_geometric_attributes_single
+
+flush(stderr()); flush(stdout())
+
+### Name: calculate_geometric_attributes_single
+### Title: Calculate Geometric Attributes for a Single Polygon
+### Aliases: calculate_geometric_attributes_single
+
+### ** Examples
+
+## Not run: 
+##D library(terra)
+##D 
+##D # Load a single polygon
+##D polygon <- vect("path/to/polygon.shp")[1, ]
+##D 
+##D # Calculate all attributes
+##D result <- calculate_geometric_attributes_single(polygon)
+##D 
+##D # Calculate only specific metrics
+##D result <- calculate_geometric_attributes_single(polygon,
+##D   metrics = c("area", "perimeter", "compactness"))
+## End(Not run)
+
+
+
+cleanEx()
+nameEx("get_distant_points")
+### * get_distant_points
+
+flush(stderr()); flush(stdout())
+
+### Name: get_distant_points
+### Title: Find Most Distant Points on Convex Hull
+### Aliases: get_distant_points
+
+### ** Examples
+
+## Not run: 
+##D library(terra)
+##D polygon <- vect("path/to/polygon.shp")
+##D distant_pts <- get_distant_points(polygon)
+## End(Not run)
+
+
+
+### * <FOOTER>
+###
+cleanEx()
+options(digits = 7L)
+base::cat("Time elapsed: ", proc.time() - base::get("ptime", pos = 'CheckExEnv'),"\n")
+grDevices::dev.off()
+###
+### Local variables: ***
+### mode: outline-minor ***
+### outline-regexp: "\\(> \\)?### [*]+" ***
+### End: ***
+quit('no')

@@ -1,0 +1,13 @@
+calc_elongation         Calculate Elongation Ratio from Minimum
+                        Bounding Rectangle
+calc_extent_ew          Calculate East-West Extent
+calc_extent_ns          Calculate North-South Extent
+calculate_geometric_attributes
+                        Calculate Geometric Attributes of Spatial
+                        Polygons
+calculate_geometric_attributes_parallel
+                        Calculate Geometric Attributes in Parallel
+calculate_geometric_attributes_single
+                        Calculate Geometric Attributes for a Single
+                        Polygon
+get_distant_points      Find Most Distant Points on Convex Hull

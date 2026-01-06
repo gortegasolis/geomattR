@@ -1,0 +1,444 @@
+\nonstopmode{}
+\documentclass[letterpaper]{book}
+\usepackage[times,inconsolata,hyper]{Rd}
+\usepackage{makeidx}
+\makeatletter\@ifl@t@r\fmtversion{2018/04/01}{}{\usepackage[utf8]{inputenc}}\makeatother
+% \usepackage{graphicx} % @USE GRAPHICX@
+\makeindex{}
+\begin{document}
+\chapter*{}
+\begin{center}
+{\textbf{\huge Package `geomattR'}}
+\par\bigskip{\large \today}
+\end{center}
+\ifthenelse{\boolean{Rd@use@hyper}}{\hypersetup{pdftitle = {geomattR: Calculate geometric attributes of spatial polygons}}}{}
+\ifthenelse{\boolean{Rd@use@hyper}}{\hypersetup{pdfauthor = {Gabriel Ortega-Solis}}}{}
+\begin{description}
+\raggedright{}
+\item[Type]\AsIs{Package}
+\item[Title]\AsIs{Calculate geometric attributes of spatial polygons}
+\item[Version]\AsIs{0.1.0}
+\item[Description]\AsIs{What the package does (one paragraph).}
+\item[License]\AsIs{MIT + file LICENSE}
+\item[Encoding]\AsIs{UTF-8}
+\item[Roxygen]\AsIs{list(markdown = TRUE)}
+\item[RoxygenNote]\AsIs{7.3.3}
+\item[Imports]\AsIs{terra, geosphere, methods}
+\item[Suggests]\AsIs{testthat (>= 3.0.0)}
+\item[Config/testthat/edition]\AsIs{3}
+\item[NeedsCompilation]\AsIs{no}
+\item[Author]\AsIs{Gabriel Ortega-Solis [aut, cre] (ORCID:
+<}\url{https://orcid.org/0000-0002-0516-5694}\AsIs{>)}
+\item[Maintainer]\AsIs{Gabriel Ortega-Solis }\email{g.ortega.solis@gmail.com}\AsIs{}
+\end{description}
+\Rdcontents{Contents}
+\HeaderA{geomattR-package}{geomattR: Calculate geometric attributes of spatial polygons}{geomattR.Rdash.package}
+\aliasA{geomattR}{geomattR-package}{geomattR}
+\keyword{internal}{geomattR-package}
+%
+\begin{Description}
+What the package does (one paragraph).
+\end{Description}
+%
+\begin{Author}
+\strong{Maintainer}: Gabriel Ortega-Solis \email{g.ortega.solis@gmail.com} (\Rhref{https://orcid.org/0000-0002-0516-5694}{ORCID})
+
+\end{Author}
+\HeaderA{calculate\_geometric\_attributes}{Calculate Geometric Attributes of Spatial Polygons}{calculate.Rul.geometric.Rul.attributes}
+%
+\begin{Description}
+Calculates a comprehensive set of geometric and morphometric attributes for
+spatial polygon features including area, perimeter, compactness metrics,
+shape indices, elongation, and orientation measures. If multiple features are
+provided, processes each feature sequentially.
+\end{Description}
+%
+\begin{Usage}
+\begin{verbatim}
+calculate_geometric_attributes(v, metrics = "all")
+\end{verbatim}
+\end{Usage}
+%
+\begin{Arguments}
+\begin{ldescription}
+\item[\code{v}] A SpatVector object representing one or more polygons.
+
+\item[\code{metrics}] Character string or vector specifying which metrics to calculate.
+Options are:
+\begin{itemize}
+
+\item{} \code{"all"} (default): Calculate all available metrics
+\item{} A single metric name as a string: Calculate only that metric
+\item{} A character vector of metric names: Calculate specified metrics
+
+\end{itemize}
+
+Available metric names: "area", "perimeter", "compactness", "reock",
+"elongation\_rectangle", "num\_holes", "hole\_area", "hole\_area\_pct",
+"num\_polygons", "ew\_length", "ns\_length", "maxlength", "bearing",
+"northerness", "fractaldimension", "sinuosity", "shape\_index",
+"circularity\_ratio", "decimallongitude", "decimallatitude"
+\end{ldescription}
+\end{Arguments}
+%
+\begin{Details}
+The function calculates various geometric metrics that describe polygon shape,
+size, and orientation. For multiple features, each polygon is processed
+sequentially. For parallel processing, use
+\code{\LinkA{calculate\_geometric\_attributes\_parallel}{calculate.Rul.geometric.Rul.attributes.Rul.parallel}}.
+
+\strong{Size metrics:}
+\begin{itemize}
+
+\item{} Area and perimeter provide basic size measurements
+\item{} Extents (EW, NS, maxlength) measure spatial dimensions
+
+\end{itemize}
+
+
+\strong{Shape metrics:}
+\begin{itemize}
+
+\item{} Compactness measures how closely a polygon resembles a circle
+\item{} Shape index and circularity provide alternative shape characterizations
+\item{} Fractal dimension measures boundary complexity
+
+\end{itemize}
+
+
+\strong{Orientation metrics:}
+\begin{itemize}
+
+\item{} Bearing and northerness describe polygon orientation
+\item{} Elongation quantifies directional stretching
+
+\end{itemize}
+
+\end{Details}
+%
+\begin{Value}
+The input SpatVector with additional columns containing the requested
+geometric attributes:
+\begin{itemize}
+
+\item{} \code{area}: Total area in square meters
+\item{} \code{perimeter}: Total perimeter length in meters
+\item{} \code{compactness}: Polsby-Popper compactness (1 = perfect circle)
+\item{} \code{reock}: Reock compactness (area / minimum enclosing circle area)
+\item{} \code{elongation\_rectangle}: Elongation ratio based on minimum bounding rectangle
+\item{} \code{num\_holes}: Number of holes (interior rings) in the polygon
+\item{} \code{hole\_area}: Total area of holes in square meters
+\item{} \code{hole\_area\_pct}: Percentage of total area occupied by holes
+\item{} \code{num\_polygons}: Number of separate polygon parts (multi-part count)
+\item{} \code{ew\_length}: Average east-west extent in meters
+\item{} \code{ns\_length}: Average north-south extent in meters
+\item{} \code{maxlength}: Maximum distance across convex hull in meters
+\item{} \code{bearing}: Geographic bearing of maximum length line in degrees
+\item{} \code{northerness}: Northerness component of bearing (-1 to 1)
+\item{} \code{fractaldimension}: Fractal dimension (complexity measure, typically 1-2)
+\item{} \code{sinuosity}: Sinuosity (perimeter to maximum length ratio)
+\item{} \code{shape\_index}: Shape index (deviation from circular shape)
+\item{} \code{circularity\_ratio}: Circularity based on maximum length
+\item{} \code{decimallongitude}: Centroid longitude in decimal degrees
+\item{} \code{decimallatitude}: Centroid latitude in decimal degrees
+
+\end{itemize}
+
+\end{Value}
+%
+\begin{Examples}
+\begin{ExampleCode}
+## Not run: 
+library(terra)
+
+# Load a polygon shapefile (single or multiple features)
+polygons <- vect("path/to/polygons.shp")
+
+# Calculate all geometric attributes (processes sequentially)
+polygons_with_attrs <- calculate_geometric_attributes(polygons)
+
+# Calculate specific metrics only
+polygons_subset <- calculate_geometric_attributes(polygons, 
+                     metrics = c("area", "perimeter", "compactness"))
+
+# View the results
+print(polygons_with_attrs)
+
+## End(Not run)
+\end{ExampleCode}
+\end{Examples}
+\HeaderA{calculate\_geometric\_attributes\_parallel}{Calculate Geometric Attributes in Parallel}{calculate.Rul.geometric.Rul.attributes.Rul.parallel}
+%
+\begin{Description}
+Calculates geometric attributes for multiple polygons. If a cluster is provided,
+processes polygons in parallel; otherwise defaults to sequential processing.
+\end{Description}
+%
+\begin{Usage}
+\begin{verbatim}
+calculate_geometric_attributes_parallel(v, metrics = "all", cl = NULL)
+\end{verbatim}
+\end{Usage}
+%
+\begin{Arguments}
+\begin{ldescription}
+\item[\code{v}] A SpatVector object representing one or more polygons.
+
+\item[\code{metrics}] Character string or vector specifying which metrics to calculate.
+See \code{\LinkA{calculate\_geometric\_attributes}{calculate.Rul.geometric.Rul.attributes}} for available options.
+
+\item[\code{cl}] A cluster object created by \code{\LinkA{parallel::makeCluster()}{parallel::makeCluster()}}, or NULL (default).
+If NULL, the function will process polygons sequentially. To enable parallel
+processing, pass an explicit cluster object.
+\end{ldescription}
+\end{Arguments}
+%
+\begin{Details}
+This function processes each polygon independently using the internal
+single-polygon function. If a cluster is provided via the \code{cl}
+parameter, it will process polygons in parallel. Otherwise, it defaults to
+sequential processing (equivalent to calling \code{\LinkA{calculate\_geometric\_attributes}{calculate.Rul.geometric.Rul.attributes}}).
+
+For a single polygon, this function simply calls
+\code{\LinkA{calculate\_geometric\_attributes}{calculate.Rul.geometric.Rul.attributes}} directly.
+
+To use parallel processing, create a cluster first:
+
+\begin{alltt}cl <- parallel::makeCluster(parallel::detectCores() - 1)
+result <- calculate_geometric_attributes_parallel(polygons, cl = cl)
+parallel::stopCluster(cl)
+\end{alltt}
+
+\end{Details}
+%
+\begin{Value}
+A SpatVector object with the same structure as input, with added
+columns containing the requested geometric attributes.
+\end{Value}
+%
+\begin{Examples}
+\begin{ExampleCode}
+## Not run: 
+library(terra)
+
+# Load multiple polygons
+polygons <- vect("path/to/polygons.shp")
+
+# Process sequentially (default)
+result <- calculate_geometric_attributes_parallel(polygons)
+
+# Process in parallel with explicit cluster
+cl <- parallel::makeCluster(parallel::detectCores() - 1)
+result <- calculate_geometric_attributes_parallel(polygons, cl = cl)
+parallel::stopCluster(cl)
+
+## End(Not run)
+\end{ExampleCode}
+\end{Examples}
+\HeaderA{calculate\_geometric\_attributes\_single}{Calculate Geometric Attributes for a Single Polygon}{calculate.Rul.geometric.Rul.attributes.Rul.single}
+%
+\begin{Description}
+Calculates geometric attributes for exactly one polygon feature. This is the
+core computational function used by \code{\LinkA{calculate\_geometric\_attributes}{calculate.Rul.geometric.Rul.attributes}} and
+\code{\LinkA{calculate\_geometric\_attributes\_parallel}{calculate.Rul.geometric.Rul.attributes.Rul.parallel}}.
+\end{Description}
+%
+\begin{Usage}
+\begin{verbatim}
+calculate_geometric_attributes_single(v, metrics = "all")
+\end{verbatim}
+\end{Usage}
+%
+\begin{Arguments}
+\begin{ldescription}
+\item[\code{v}] A SpatVector object containing exactly one polygon feature.
+
+\item[\code{metrics}] Character string or vector specifying which metrics to calculate.
+Options are:
+\begin{itemize}
+
+\item{} \code{"all"} (default): Calculate all available metrics
+\item{} A single metric name as a string: Calculate only that metric
+\item{} A character vector of metric names: Calculate specified metrics
+
+\end{itemize}
+
+Available metric names: "area", "perimeter", "compactness", "reock",
+"elongation\_rectangle", "num\_holes", "hole\_area", "hole\_area\_pct",
+"num\_polygons", "ew\_length", "ns\_length", "maxlength", "bearing",
+"northerness", "fractaldimension", "sinuosity", "shape\_index",
+"circularity\_ratio", "decimallongitude", "decimallatitude"
+\end{ldescription}
+\end{Arguments}
+%
+\begin{Details}
+This function is optimized to process a single polygon and only computes
+intermediate geometric objects (convex hull, centroid, etc.) that are needed
+for the requested metrics.
+
+For processing multiple polygons, use \code{\LinkA{calculate\_geometric\_attributes}{calculate.Rul.geometric.Rul.attributes}}
+(sequential) or \code{\LinkA{calculate\_geometric\_attributes\_parallel}{calculate.Rul.geometric.Rul.attributes.Rul.parallel}} (parallel).
+\end{Details}
+%
+\begin{Value}
+The input SpatVector with additional columns containing the requested
+geometric attributes.
+\end{Value}
+%
+\begin{Examples}
+\begin{ExampleCode}
+## Not run: 
+library(terra)
+
+# Load a single polygon
+polygon <- vect("path/to/polygon.shp")[1, ]
+
+# Calculate all attributes
+result <- calculate_geometric_attributes_single(polygon)
+
+# Calculate only specific metrics
+result <- calculate_geometric_attributes_single(polygon,
+  metrics = c("area", "perimeter", "compactness"))
+
+## End(Not run)
+\end{ExampleCode}
+\end{Examples}
+\HeaderA{calc\_elongation}{Calculate Elongation Ratio from Minimum Bounding Rectangle}{calc.Rul.elongation}
+%
+\begin{Description}
+Calculates the elongation ratio of a polygon based on its minimum bounding
+rectangle. The ratio is the major axis length divided by the minor axis length.
+\end{Description}
+%
+\begin{Usage}
+\begin{verbatim}
+calc_elongation(v)
+\end{verbatim}
+\end{Usage}
+%
+\begin{Arguments}
+\begin{ldescription}
+\item[\code{v}] A SpatVector object representing a polygon.
+\end{ldescription}
+\end{Arguments}
+%
+\begin{Value}
+A numeric value representing the elongation ratio (major/minor axis).
+Higher values indicate more elongated shapes.
+\end{Value}
+%
+\begin{Examples}
+\begin{ExampleCode}
+## Not run: 
+library(terra)
+polygon <- vect("path/to/polygon.shp")
+elongation <- calc_elongation(polygon)
+
+## End(Not run)
+\end{ExampleCode}
+\end{Examples}
+\HeaderA{calc\_extent\_ew}{Calculate East-West Extent}{calc.Rul.extent.Rul.ew}
+%
+\begin{Description}
+Calculates the average east-west extent of a polygon based on its bounding box.
+\end{Description}
+%
+\begin{Usage}
+\begin{verbatim}
+calc_extent_ew(v)
+\end{verbatim}
+\end{Usage}
+%
+\begin{Arguments}
+\begin{ldescription}
+\item[\code{v}] A SpatVector object representing a polygon.
+\end{ldescription}
+\end{Arguments}
+%
+\begin{Value}
+A numeric value representing the average east-west extent in meters.
+\end{Value}
+%
+\begin{Examples}
+\begin{ExampleCode}
+## Not run: 
+library(terra)
+polygon <- vect("path/to/polygon.shp")
+ew_extent <- calc_extent_ew(polygon)
+
+## End(Not run)
+\end{ExampleCode}
+\end{Examples}
+\HeaderA{calc\_extent\_ns}{Calculate North-South Extent}{calc.Rul.extent.Rul.ns}
+%
+\begin{Description}
+Calculates the average north-south extent of a polygon based on its bounding box.
+\end{Description}
+%
+\begin{Usage}
+\begin{verbatim}
+calc_extent_ns(v)
+\end{verbatim}
+\end{Usage}
+%
+\begin{Arguments}
+\begin{ldescription}
+\item[\code{v}] A SpatVector object representing a polygon.
+\end{ldescription}
+\end{Arguments}
+%
+\begin{Value}
+A numeric value representing the average north-south extent in meters.
+\end{Value}
+%
+\begin{Examples}
+\begin{ExampleCode}
+## Not run: 
+library(terra)
+polygon <- vect("path/to/polygon.shp")
+ns_extent <- calc_extent_ns(polygon)
+
+## End(Not run)
+\end{ExampleCode}
+\end{Examples}
+\HeaderA{get\_distant\_points}{Find Most Distant Points on Convex Hull}{get.Rul.distant.Rul.points}
+%
+\begin{Description}
+Identifies the pair of most distant points on the convex hull of a polygon,
+ordered from south to north.
+\end{Description}
+%
+\begin{Usage}
+\begin{verbatim}
+get_distant_points(v)
+\end{verbatim}
+\end{Usage}
+%
+\begin{Arguments}
+\begin{ldescription}
+\item[\code{v}] A SpatVector object representing a polygon.
+\end{ldescription}
+\end{Arguments}
+%
+\begin{Value}
+A list containing:
+\begin{ldescription}
+\item[\code{start\_ll}] SpatVector of the southernmost point
+\item[\code{end\_ll}] SpatVector of the northernmost point
+\item[\code{distance}] Maximum distance in meters
+\item[\code{bearing}] Geographic bearing from start to end in degrees
+\end{ldescription}
+\end{Value}
+%
+\begin{Examples}
+\begin{ExampleCode}
+## Not run: 
+library(terra)
+polygon <- vect("path/to/polygon.shp")
+distant_pts <- get_distant_points(polygon)
+
+## End(Not run)
+\end{ExampleCode}
+\end{Examples}
+\printindex{}
+\end{document}
