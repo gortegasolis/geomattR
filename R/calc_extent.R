@@ -1,6 +1,6 @@
 #' Calculate East-West Extent
 #'
-#' Calculates the average east-west extent of a polygon based on its bounding box.
+#' Calculates the average east-west extent of a polygon based on its geographic bounding box.
 #'
 #' @param v A SpatVector object representing a polygon.
 #'
@@ -27,7 +27,7 @@ calc_extent_ew <- function(v) {
 
 #' Calculate North-South Extent
 #'
-#' Calculates the average north-south extent of a polygon based on its bounding box.
+#' Calculates the average north-south extent of a polygon based on its geographic bounding box.
 #'
 #' @param v A SpatVector object representing a polygon.
 #'

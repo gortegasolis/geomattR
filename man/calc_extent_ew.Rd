@@ -13,7 +13,7 @@ calc_extent_ew(v)
 A numeric value representing the average east-west extent in meters.
 }
 \description{
-Calculates the average east-west extent of a polygon based on its bounding box.
+Calculates the average east-west extent of a polygon based on its geographic bounding box.
 }
 \examples{
 \dontrun{

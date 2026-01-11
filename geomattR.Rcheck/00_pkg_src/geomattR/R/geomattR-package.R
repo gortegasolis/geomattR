@@ -1,2 +1,58 @@
+#' geomattR: Calculate Geometric Attributes of Spatial Polygons
+#'
+#' @description
+#' Calculate geometric and morphometric attributes of spatial polygons with
+#' geodesic accuracy. Computes area, perimeter, compactness, elongation,
+#' orientation, fractal dimension, and shape indices suitable for geospatial
+#' analysis, urban planning, and environmental science applications.
+#'
+#' All measurements use geodesic calculations for accuracy across different
+#' coordinate reference systems. The package automatically handles both
+#' geographic (lon/lat) and projected CRS appropriately.
+#'
+#' @details
+#'
+#' ## Main Functions
+#'
+#' - [calculate_geometric_attributes()]: Calculate metrics for one or more polygons (sequential)
+#' - [calculate_geometric_attributes_single()]: Core computation for a single polygon
+#' - [calculate_geometric_attributes_parallel()]: Calculate metrics with parallel processing
+#' - [get_distant_points()]: Find most distant points on convex hull
+#' - [calc_elongation()]: Calculate elongation ratio
+#' - [calc_extent_ew()]: Calculate east-west extent
+#' - [calc_extent_ns()]: Calculate north-south extent
+#'
+#' ## Geodesic Measurements
+#'
+#' All calculations prioritize accuracy:
+#'
+#' - **Area & Perimeter**: Use `terra::expanse()` with explicit
+#'   `transform = TRUE` for automatic geodesic calculation; perimeter
+#'   is projected to lon/lat as recommended by terra documentation
+#' - **Distances**: Use explicit `method = "geo"` for geodesic calculations
+#' - **Automatic Projection**: Non-geographic CRS are handled transparently
+#'
+#' ## Example
+#'
+#' ```r
+#' library(geomattR)
+#' library(terra)
+#'
+#' # Create sample polygon in WGS84
+#' coords <- cbind(c(0, 0, 1, 1, 0), c(0, 1, 1, 0, 0))
+#' polygon <- vect(coords, type = "polygon", crs = "EPSG:4326")
+#'
+#' # Calculate all attributes (geodesic by default)
+#' result <- calculate_geometric_attributes(polygon)
+#'
+#' # Calculate specific metrics
+#' result <- calculate_geometric_attributes(polygon,
+#'   metrics = c("area", "perimeter", "compactness"))
+#' ```
+#'
+#' @import terra
+#' @import methods
+#' @importFrom geosphere bearing
+#'
 #' @keywords internal
 "_PACKAGE"

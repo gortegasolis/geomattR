@@ -13,7 +13,7 @@ calc_extent_ns(v)
 A numeric value representing the average north-south extent in meters.
 }
 \description{
-Calculates the average north-south extent of a polygon based on its bounding box.
+Calculates the average north-south extent of a polygon based on its geographic bounding box.
 }
 \examples{
 \dontrun{

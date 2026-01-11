@@ -62,12 +62,10 @@ sequentially. For parallel processing, use
 
 \strong{Size metrics:}
 \itemize{
-\item Area and perimeter provide basic size measurements
-\item Extents (EW, NS, maxlength) measure spatial dimensions
-}
-
+\item Area calls directly to terra::expanse() for geodesic area calculation.
+\item Perimeter calls directly to terra::perimeter().
+\item Extents (EW, NS) are based on the geographic bounding box of each supplied polygon. The extracts the north-west, north-east, south-west, and south-east corners and calculates the average east-west and north-south distances using geodesic methods.
 \strong{Shape metrics:}
-\itemize{
 \item Compactness measures how closely a polygon resembles a circle
 \item Shape index and circularity provide alternative shape characterizations
 \item Fractal dimension measures boundary complexity
@@ -75,8 +73,10 @@ sequentially. For parallel processing, use
 
 \strong{Orientation metrics:}
 \itemize{
-\item Bearing and northerness describe polygon orientation
-\item Elongation quantifies directional stretching
+\item Bearing describes the orientation of the longest axis of the polygon
+\item Northerness quantifies the northward component of the bearing. Values range
+from -1 (southward) to 1 (northward).
+\item Elongation takes the ratio between the major and minor axes of the minimum bounding rectangle.
 }
 }
 \examples{

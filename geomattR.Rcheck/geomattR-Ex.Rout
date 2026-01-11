@@ -179,7 +179,7 @@ Type 'q()' to quit R.
 > flush(stderr()); flush(stdout())
 > 
 > ### Name: get_distant_points
-> ### Title: Find Most Distant Points on Convex Hull
+> ### Title: Find largest distance between a pair of opposite vertices
 > ### Aliases: get_distant_points
 > 
 > ### ** Examples
@@ -197,7 +197,7 @@ Type 'q()' to quit R.
 > cleanEx()
 > options(digits = 7L)
 > base::cat("Time elapsed: ", proc.time() - base::get("ptime", pos = 'CheckExEnv'),"\n")
-Time elapsed:  0.053 0.01 0.063 0 0 
+Time elapsed:  2.355 0.037 2.398 0 0 
 > grDevices::dev.off()
 null device 
           1 

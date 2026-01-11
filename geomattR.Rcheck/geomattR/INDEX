@@ -10,4 +10,5 @@ calculate_geometric_attributes_parallel
 calculate_geometric_attributes_single
                         Calculate Geometric Attributes for a Single
                         Polygon
-get_distant_points      Find Most Distant Points on Convex Hull
+get_distant_points      Find largest distance between a pair of
+                        opposite vertices

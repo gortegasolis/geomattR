@@ -1,15 +1,16 @@
-#' Find Most Distant Points on Convex Hull
+#' Find largest distance between a pair of opposite vertices
 #'
-#' Identifies the pair of most distant points on the convex hull of a polygon,
-#' ordered from south to north.
+#' Identifies the pair of most distant points and calculate the distance and bearing from the southernmost to the northernmost point.
 #'
 #' @param v A SpatVector object representing a polygon.
+#' @param distance Logical indicating whether to return the maximum distance (default TRUE).
+#' @param bearing Logical indicating whether to return the bearing (default TRUE).
 #'
 #' @return A list containing:
-#'   \item{start_ll}{SpatVector of the southernmost point}
-#'   \item{end_ll}{SpatVector of the northernmost point}
+#'   \item{south_point}{SpatVector of the southernmost point}
+#'   \item{north_point}{SpatVector of the northernmost point}
 #'   \item{distance}{Maximum distance in meters}
-#'   \item{bearing}{Geographic bearing from start to end in degrees}
+#'   \item{bearing}{Geographic bearing from south to north in degrees}
 #'
 #' @export
 #'
@@ -19,10 +20,10 @@
 #' polygon <- vect("path/to/polygon.shp")
 #' distant_pts <- get_distant_points(polygon)
 #' }
-get_distant_points <- function(v) {
+get_distant_points <- function(v, distance = TRUE, bearing = TRUE) {
   hull <- terra::hull(v, type = "convex")
   coords <- terra::crds(hull)
-  
+
   # Find the pair of most distant points
   points_hull <- terra::vect(coords, crs = terra::crs(v))
   dists_hull <- terra::distance(points_hull, method = "geo")
@@ -31,20 +32,26 @@ get_distant_points <- function(v) {
   start_idx <- max_dist_idx[1]
   end_idx <- max_dist_idx[2]
   subset_hull <- points_hull[c(start_idx, end_idx), ]
-  
+
   # Ensure start_ll is the southernmost point
   coords_subset <- terra::crds(subset_hull)
-  order_idx <- order(coords_subset[, 2])  # Order by latitude (y coordinate)
-  start_ll <- subset_hull[order_idx[1], ]  # Point with minimum latitude
-  end_ll <- subset_hull[order_idx[2], ]    # Point with maximum latitude
-  
-  max_dist <- terra::distance(start_ll, end_ll, method = "geo")
-  bearing_val <- geosphere::bearing(start_ll, end_ll)
-  
-  list(
-    start_ll = start_ll,
-    end_ll = end_ll,
-    distance = max_dist,
-    bearing = bearing_val
+  order_idx <- order(coords_subset[, 2]) # Order by latitude (y coordinate)
+  south_point <- subset_hull[order_idx[1], ] # Point with minimum latitude
+  north_point <- subset_hull[order_idx[2], ] # Point with maximum latitude
+
+  result <- list(
+    south_point = south_point,
+    north_point = north_point
   )
+
+  if (distance) {
+    max_dist <- terra::distance(south_point, north_point, method = "geo")
+    result$distance <- max_dist
+  }
+
+  if (bearing) {
+    bearing_val <- geosphere::bearing(south_point, north_point)
+    result$bearing <- bearing_val
+  }
+  return(result)
 }

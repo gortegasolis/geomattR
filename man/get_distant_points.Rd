@@ -2,23 +2,26 @@
 % Please edit documentation in R/get_distant_points.R
 \name{get_distant_points}
 \alias{get_distant_points}
-\title{Find Most Distant Points on Convex Hull}
+\title{Find largest distance between a pair of opposite vertices}
 \usage{
-get_distant_points(v)
+get_distant_points(v, distance = TRUE, bearing = TRUE)
 }
 \arguments{
 \item{v}{A SpatVector object representing a polygon.}
+
+\item{distance}{Logical indicating whether to return the maximum distance (default TRUE).}
+
+\item{bearing}{Logical indicating whether to return the bearing (default TRUE).}
 }
 \value{
 A list containing:
-\item{start_ll}{SpatVector of the southernmost point}
-\item{end_ll}{SpatVector of the northernmost point}
+\item{south_point}{SpatVector of the southernmost point}
+\item{north_point}{SpatVector of the northernmost point}
 \item{distance}{Maximum distance in meters}
-\item{bearing}{Geographic bearing from start to end in degrees}
+\item{bearing}{Geographic bearing from south to north in degrees}
 }
 \description{
-Identifies the pair of most distant points on the convex hull of a polygon,
-ordered from south to north.
+Identifies the pair of most distant points and calculate the distance and bearing from the southernmost to the northernmost point.
 }
 \examples{
 \dontrun{

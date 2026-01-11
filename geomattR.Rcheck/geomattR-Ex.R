@@ -160,7 +160,7 @@ nameEx("get_distant_points")
 flush(stderr()); flush(stdout())
 
 ### Name: get_distant_points
-### Title: Find Most Distant Points on Convex Hull
+### Title: Find largest distance between a pair of opposite vertices
 ### Aliases: get_distant_points
 
 ### ** Examples

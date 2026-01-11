@@ -51,17 +51,19 @@
 #' \code{\link{calculate_geometric_attributes_parallel}}.
 #'
 #' \strong{Size metrics:}
-#' - Area and perimeter provide basic size measurements
-#' - Extents (EW, NS, maxlength) measure spatial dimensions
-#'
+#' - Area calls directly to terra::expanse() for geodesic area calculation.
+#' - Perimeter calls directly to terra::perimeter().
+#' - Extents (EW, NS) are based on the geographic bounding box of each supplied polygon. The extracts the north-west, north-east, south-west, and south-east corners and calculates the average east-west and north-south distances using geodesic methods.
 #' \strong{Shape metrics:}
 #' - Compactness measures how closely a polygon resembles a circle
 #' - Shape index and circularity provide alternative shape characterizations
 #' - Fractal dimension measures boundary complexity
 #'
 #' \strong{Orientation metrics:}
-#' - Bearing and northerness describe polygon orientation
-#' - Elongation quantifies directional stretching
+#' - Bearing describes the orientation of the longest axis of the polygon
+#' - Northerness quantifies the northward component of the bearing. Values range
+#'   from -1 (southward) to 1 (northward).
+#' - Elongation takes the ratio between the major and minor axes of the minimum bounding rectangle.
 #'
 #' @export
 #'

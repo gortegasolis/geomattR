@@ -21,8 +21,8 @@
 * checking whether package ‘geomattR’ can be installed ... OK
 * checking installed package size ... OK
 * checking package directory ... OK
-* checking DESCRIPTION meta-information ... NOTE
-Licence stub is invalid DCF.
+* checking ‘build’ directory ... OK
+* checking DESCRIPTION meta-information ... OK
 * checking top-level files ... OK
 * checking for left-over files ... OK
 * checking index information ... OK
@@ -48,25 +48,15 @@ Licence stub is invalid DCF.
 * checking Rd \usage sections ... OK
 * checking Rd contents ... OK
 * checking for unstated dependencies in examples ... OK
+* checking installed files from ‘inst/doc’ ... OK
+* checking files in ‘vignettes’ ... OK
 * checking examples ... OK
 * checking for unstated dependencies in ‘tests’ ... OK
 * checking tests ... OK
   Running ‘testthat.R’
-* checking PDF version of manual ... WARNING
-LaTeX errors when creating PDF version.
-This typically indicates Rd problems.
-LaTeX errors found:
-! LaTeX Error: File `inconsolata.sty' not found.
-
-Type X to quit or <RETURN> to proceed,
-or enter new name. (Default extension: sty)
-
-! Emergency stop.
-<read *> 
-         
-l.326 ^^M
-         
-!  ==> Fatal error occurred, no output PDF file produced!
-* checking PDF version of manual without index ... OK
+* checking for unstated dependencies in vignettes ... OK
+* checking package vignettes ... OK
+* checking re-building of vignette outputs ... OK
+* checking PDF version of manual ... OK
 * DONE
-Status: 1 WARNING, 1 NOTE
+Status: OK

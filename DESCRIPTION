@@ -1,19 +1,30 @@
 Package: geomattR
 Type: Package
-Title: Calculate geometric attributes of spatial polygons
+Title: Calculate Geometric Attributes of Spatial Polygons
 Version: 0.1.0
 Authors@R: 
     person("Gabriel", "Ortega-Solis", , "g.ortega.solis@gmail.com", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0002-0516-5694"))
-Description: What the package does (one paragraph).
+Description: Provides a comprehensive toolkit for calculating geometric and morphometric
+    attributes of spatial polygons. Computes metrics including area, perimeter, compactness,
+    elongation, orientation (bearing), fractal dimension, and various shape indices. All
+    measurements use geodesic calculations for accuracy across different coordinate reference
+    systems, automatically handling geographic (lon/lat) data appropriately. Designed for
+    geospatial analysts, urban planners, and environmental scientists working with 'terra'
+    vector data objects <https://github.com/rspatial/terra>.
 License: MIT + file LICENSE
+URL: https://github.com/gortegasolis/geomattR
+BugReports: https://github.com/gortegasolis/geomattR/issues
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.3
 Imports:
-    terra,
-    geosphere,
+    terra (>= 1.8.70),
+    geosphere (>= 1.5.20),
     methods
 Suggests: 
-    testthat (>= 3.0.0)
+    testthat (>= 3.2.3),
+    knitr (>= 1.50),
+    rmarkdown (>= 2.30)
 Config/testthat/edition: 3
+VignetteBuilder: knitr
