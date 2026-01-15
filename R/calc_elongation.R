@@ -16,7 +16,11 @@
 #' polygon <- vect("path/to/polygon.shp")
 #' elongation <- calc_elongation(polygon)
 #' }
-calc_elongation <- function(v) {
+calc_elongation <- function(v, isHull = FALSE) {
+  if (!isHull) {
+    v <- terra::hull(v, type = "convex")
+  }
+  
   minRectangle <- terra::hull(v, type = "rectangle")
   dims_rect <- terra::crds(minRectangle)
   dims_rect <- terra::vect(dims_rect, crs = terra::crs(v))

@@ -12,6 +12,9 @@ This package is particularly useful for:
 - **Urban planners** characterizing building and neighborhood geometry
 - **Environmental scientists** studying habitat patch metrics
 - **Remote sensing practitioners** extracting morphological features from vector data
+- **Landscape ecologists** quantifying landscape structure
+- **Political scientists** examining electoral district shapes
+- **Epidemiologists** analyzing spatial spread patterns
 
 All calculations use the [`terra`](https://github.com/rspatial/terra) package for efficient spatial data handling, with explicit geodesic methods ensuring accurate results regardless of input CRS (geographic or projected).
 
@@ -82,11 +85,7 @@ result_subset <- calculate_geometric_attributes(
 
 ### Geodesic Calculations
 
-Unlike many GIS packages, `geomattR` prioritizes accuracy:
-
-- **Area & Perimeter**: Automatically handles both geographic and projected CRS; uses geodesic calculations per terra documentation
-- **Distances**: Uses explicit `method = "geo"` for geodesic distance calculations
-- **Automatic Projection**: For non-geographic CRS, perimeter is calculated via geodesic transformation
+`geomattR` prioritizes geodesic calculations to ensure accuracy across different coordinate reference systems (CRS). When input polygons are in a projected CRS, the package automatically transforms them to a geographic CRS (WGS84) for geodesic measurements, then returns results in the original CRS.
 
 ## Example: Analyzing Building Footprints
 

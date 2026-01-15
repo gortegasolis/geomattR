@@ -87,6 +87,7 @@ calculate_geometric_attributes_single <- function(v, metrics = "all") {
       " features."
     )
   }
+  verbatimCRS <- terra::crs(v)
   v <- terra::project(v, "EPSG:4326") # Ensure geographic CRS for geodesic calculations
 
   # Define all available metrics
@@ -231,10 +232,10 @@ calculate_geometric_attributes_single <- function(v, metrics = "all") {
 
   # Extent metrics
   if ("ew_length" %in% metrics_to_calc) {
-    v$ew_length <- calc_extent_ew(v) # Average east-west extent in meters
+    v$ew_length <- calc_extent_ew(hull, isHull = TRUE) # Average east-west extent in meters
   }
   if ("ns_length" %in% metrics_to_calc) {
-    v$ns_length <- calc_extent_ns(v) # Average north-south extent in meters
+    v$ns_length <- calc_extent_ns(hull, isHull = TRUE) # Average north-south extent in meters
   }
   if ("maxlength" %in% metrics_to_calc) {
     v$maxlength <- distant_pts$distance # Maximum distance across convex hull in meters
@@ -269,6 +270,9 @@ calculate_geometric_attributes_single <- function(v, metrics = "all") {
   if ("decimallatitude" %in% metrics_to_calc) {
     v$decimallatitude <- terra::crds(centroid)[, 2] # Centroid latitude
   }
+
+  # Restore original CRS
+  v <- terra::project(v, verbatimCRS)
 
   return(v)
 }
