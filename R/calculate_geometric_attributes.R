@@ -1,9 +1,8 @@
 #' Calculate Geometric Attributes of Spatial Polygons
 #'
 #' Calculates a comprehensive set of geometric and morphometric attributes for
-#' spatial polygon features including area, perimeter, compactness metrics,
-#' shape indices, elongation, and orientation measures. If multiple features are
-#' provided, processes each feature sequentially.
+#' spatial polygon features. Supports both sequential and parallel execution
+#' through an optional cluster argument.
 #'
 #' @param v A SpatVector object representing one or more polygons.
 #' @param metrics Character string or vector specifying which metrics to calculate.
@@ -18,6 +17,10 @@
 #'   "num_polygons", "ew_length", "ns_length", "maxlength", "bearing",
 #'   "northerness", "fractaldimension", "sinuosity", "shape_index",
 #'   "circularity_ratio", "decimallongitude", "decimallatitude"
+#'
+#' @param cl A cluster object created by \code{\link[parallel]{makeCluster}}, or
+#'   \code{NULL} (default). When \code{NULL} features are processed sequentially.
+#'   Passing a cluster enables parallel processing across the cluster workers.
 #'
 #' @return The input SpatVector with additional columns containing the requested
 #'   geometric attributes:
@@ -45,61 +48,113 @@
 #'   }
 #'
 #' @details
-#' The function calculates various geometric metrics that describe polygon shape,
-#' size, and orientation. For multiple features, each polygon is processed
-#' sequentially. For parallel processing, use
-#' \code{\link{calculate_geometric_attributes_parallel}}.
+#' Each polygon is processed independently via
+#' \code{\link{calculate_geometric_attributes_single}}, which ensures that
+#' intermediate objects (convex hull, minimum circle, etc.) are computed only
+#' once per feature.
+#'
+#' \strong{Sequential vs. Parallel:}
+#' \itemize{
+#'   \item When \code{cl = NULL} (default), features are processed sequentially
+#'     with \code{\link[base]{lapply}}.
+#'   \item When \code{cl} is a valid cluster, features are distributed across
+#'     workers via \code{\link[parallel]{parLapply}}. The function handles
+#'     library loading and function export to the cluster automatically.
+#' }
+#'
+#' \strong{Geodesic Measurements:}
+#' All measurements use geodesic calculations for accuracy regardless of input
+#' CRS. Inputs are internally projected to EPSG:4326 for computation and
+#' restored to the original CRS on return.
 #'
 #' \strong{Size metrics:}
-#' - Area calls directly to terra::expanse() for geodesic area calculation.
-#' - Perimeter calls directly to terra::perimeter().
-#' - Extents (EW, NS) are based on the geographic bounding box of each supplied polygon. The extracts the north-west, north-east, south-west, and south-east corners and calculates the average east-west and north-south distances using geodesic methods.
+#' \itemize{
+#'   \item Area: \code{terra::expanse()} with \code{transform = TRUE}.
+#'   \item Perimeter: \code{terra::perim()} on the geographic representation.
+#'   \item Extents (EW, NS): geodesic distances between bounding-box corners.
+#' }
+#'
 #' \strong{Shape metrics:}
-#' - Compactness measures how closely a polygon resembles a circle
-#' - Shape index and circularity provide alternative shape characterizations
-#' - Fractal dimension measures boundary complexity
+#' \itemize{
+#'   \item Compactness (Polsby-Popper): how circular the polygon is.
+#'   \item Shape index and circularity ratio: alternative shape characterizations.
+#'   \item Fractal dimension: boundary complexity.
+#' }
 #'
 #' \strong{Orientation metrics:}
-#' - Bearing describes the orientation of the longest axis of the polygon
-#' - Northerness quantifies the northward component of the bearing. Values range
-#'   from -1 (southward) to 1 (northward).
-#' - Elongation takes the ratio between the major and minor axes of the minimum bounding rectangle.
+#' \itemize{
+#'   \item Bearing: orientation of the longest axis.
+#'   \item Northerness: cosine of bearing; ranges from -1 (south) to 1 (north).
+#'   \item Elongation: ratio of major to minor axis of the minimum bounding
+#'     rectangle.
+#' }
 #'
 #' @export
 #'
 #' @examples
 #' \dontrun{
 #' library(terra)
-#' 
-#' # Load a polygon shapefile (single or multiple features)
+#'
+#' # Load polygon shapefile
 #' polygons <- vect("path/to/polygons.shp")
-#' 
-#' # Calculate all geometric attributes (processes sequentially)
-#' polygons_with_attrs <- calculate_geometric_attributes(polygons)
-#' 
+#'
+#' # Sequential processing (default)
+#' result <- calculate_geometric_attributes(polygons)
+#'
 #' # Calculate specific metrics only
-#' polygons_subset <- calculate_geometric_attributes(polygons, 
-#'                      metrics = c("area", "perimeter", "compactness"))
-#' 
-#' # View the results
-#' print(polygons_with_attrs)
+#' result <- calculate_geometric_attributes(polygons,
+#'   metrics = c("area", "perimeter", "compactness"))
+#'
+#' # Parallel processing with an explicit cluster
+#' cl <- parallel::makeCluster(parallel::detectCores() - 1)
+#' result <- calculate_geometric_attributes(polygons, cl = cl)
+#' parallel::stopCluster(cl)
 #' }
-calculate_geometric_attributes <- function(v, metrics = "all") {
+calculate_geometric_attributes <- function(v, metrics = "all", cl = NULL) {
   # Validate input
   if (!methods::is(v, "SpatVector")) {
     stop("'v' must be a SpatVector object")
   }
-  
+
   n_features <- nrow(v)
-  
-  # If multiple features, process each one and combine results
-  if (n_features > 1) {
-    results <- lapply(1:n_features, function(i) {
-      calculate_geometric_attributes_single(v[i, ], metrics = metrics)
-    })
-    return(do.call(rbind, results))
+
+  # Single feature: process directly (no overhead from split/combine)
+  if (n_features == 1L) {
+    return(calculate_geometric_attributes_single(v, metrics = metrics))
   }
-  
-  # Single feature: process directly
-  return(calculate_geometric_attributes_single(v, metrics = metrics))
+
+  # Split the SpatVector into individual features
+  feature_list <- lapply(seq_len(n_features), function(i) v[i, ])
+
+  if (is.null(cl)) {
+    # --- Sequential processing ---
+    results <- lapply(feature_list, function(poly) {
+      calculate_geometric_attributes_single(poly, metrics = metrics)
+    })
+  } else {
+    # --- Parallel processing ---
+    # Prepare cluster: load packages and export required functions
+    parallel::clusterEvalQ(cl, {
+      library(terra)
+      library(geosphere)
+    })
+    parallel::clusterExport(
+      cl,
+      c(
+        "calculate_geometric_attributes_single",
+        "calc_elongation",
+        "calc_extent_ew",
+        "calc_extent_ns",
+        "get_distant_points"
+      ),
+      envir = asNamespace("geomattR")
+    )
+
+    results <- parallel::parLapply(cl, feature_list, function(poly) {
+      calculate_geometric_attributes_single(poly, metrics = metrics)
+    })
+  }
+
+  # Combine results back into a single SpatVector
+  do.call(rbind, results)
 }

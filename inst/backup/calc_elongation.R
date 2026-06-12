@@ -4,9 +4,6 @@
 #' rectangle. The ratio is the major axis length divided by the minor axis length.
 #'
 #' @param v A SpatVector object representing a polygon.
-#' @param hull An optional pre-computed convex hull (SpatVector). If \code{NULL}
-#'   (default), the convex hull is computed internally. Passing a pre-computed
-#'   hull avoids redundant computation.
 #'
 #' @return A numeric value representing the elongation ratio (major/minor axis).
 #'   Higher values indicate more elongated shapes.
@@ -19,20 +16,20 @@
 #' polygon <- vect("path/to/polygon.shp")
 #' elongation <- calc_elongation(polygon)
 #' }
-calc_elongation <- function(v, hull = NULL) {
-  if (is.null(hull)) {
-    hull <- terra::hull(v, type = "convex")
+calc_elongation <- function(v, isHull = FALSE) {
+  if (!isHull) {
+    v <- terra::hull(v, type = "convex")
   }
-
-  minRectangle <- terra::hull(hull, type = "rectangle")
+  
+  minRectangle <- terra::hull(v, type = "rectangle")
   dims_rect <- terra::crds(minRectangle)
   dims_rect <- terra::vect(dims_rect, crs = terra::crs(v))
-
+  
   dists_rect <- terra::distance(dims_rect, method = "geo")
   dists_rect <- sort(dists_rect, decreasing = TRUE)
   major <- mean(dists_rect[1:2])
   dists_rect <- sort(dists_rect, decreasing = FALSE)
   minor <- mean(dists_rect[1:2])
-
+  
   major / minor
 }

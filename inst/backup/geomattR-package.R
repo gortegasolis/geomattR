@@ -14,16 +14,9 @@
 #'
 #' ## Main Functions
 #'
-#' - [calculate_geometric_attributes()]: Calculate metrics for one or more
-#'   polygons. Runs sequentially by default; pass a `cl` argument for parallel
-#'   execution.
-#' - [calculate_geometric_attributes_single()]: Core computation for a single
-#'   polygon. Optimized to avoid redundant intermediate object creation.
-#' - [calculate_geometric_attributes_parallel()]: Backward-compatible wrapper
-#'   that delegates to `calculate_geometric_attributes()`.
-#'
-#' ## Helper Functions
-#'
+#' - [calculate_geometric_attributes()]: Calculate metrics for one or more polygons (sequential)
+#' - [calculate_geometric_attributes_single()]: Core computation for a single polygon
+#' - [calculate_geometric_attributes_parallel()]: Calculate metrics with parallel processing
 #' - [get_distant_points()]: Find most distant points on convex hull
 #' - [calc_elongation()]: Calculate elongation ratio
 #' - [calc_extent_ew()]: Calculate east-west extent
@@ -35,7 +28,7 @@
 #'
 #' - **Area & Perimeter**: Use `terra::expanse()` with explicit
 #'   `transform = TRUE` for automatic geodesic calculation; perimeter
-#'   is computed on the EPSG:4326 representation
+#'   is projected to lon/lat as recommended by terra documentation
 #' - **Distances**: Use explicit `method = "geo"` for geodesic calculations
 #' - **Automatic Projection**: Non-geographic CRS are handled transparently
 #'
@@ -55,11 +48,6 @@
 #' # Calculate specific metrics
 #' result <- calculate_geometric_attributes(polygon,
 #'   metrics = c("area", "perimeter", "compactness"))
-#'
-#' # Parallel processing
-#' cl <- parallel::makeCluster(2)
-#' result <- calculate_geometric_attributes(polygon, cl = cl)
-#' parallel::stopCluster(cl)
 #' ```
 #'
 #' @import terra
