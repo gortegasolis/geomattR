@@ -69,8 +69,9 @@ test_that("calculate_geometric_attributes_single computes correct area", {
   expect_true(result$area > 0)
 
   # Approximate area at equator should be around 111km x 111km = 12321 km2
-  # Allow large tolerance due to geodesic calculations
-  expect_true(result$area < 200000000) # Less than 200,000 km2
+  # Allow tolerance due to geodesic calculations
+  expect_true(result$area > 1e10)
+  expect_true(result$area < 2e10)
 })
 
 test_that("calculate_geometric_attributes_single computes positive perimeter", {
@@ -98,13 +99,9 @@ test_that("calculate_geometric_attributes_single computes valid compactness", {
 })
 
 test_that("calculate_geometric_attributes_single handles holes correctly", {
-  # Create polygon with a hole
-  outer <- cbind(c(0, 0, 4, 4, 0), c(0, 4, 4, 0, 0))
-  hole <- cbind(c(1, 1, 3, 3, 1), c(1, 3, 3, 1, 1))
-
+  # Build a single polygon feature with one interior ring.
   pol <- terra::vect(
-    list(outer, hole),
-    type = "polygon",
+    "POLYGON ((0 0, 0 4, 4 4, 4 0, 0 0), (1 1, 1 3, 3 3, 3 1, 1 1))",
     crs = "EPSG:4326"
   )
 
