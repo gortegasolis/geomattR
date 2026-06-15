@@ -3,4 +3,13 @@
 .RData
 .Ruserdata
 *.Rproj
-inst/doc
+
+# R package build/check artifacts
+*.Rcheck/
+*.tar.gz
+
+# Generated documentation output
+inst/doc/
+
+# Common local folders not needed in repo
+.vscode/
