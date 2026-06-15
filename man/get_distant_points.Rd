@@ -4,24 +4,33 @@
 \alias{get_distant_points}
 \title{Find largest distance between a pair of opposite vertices}
 \usage{
-get_distant_points(v, distance = TRUE, bearing = TRUE)
+get_distant_points(v, hull = NULL, distance = TRUE, bearing = TRUE)
 }
 \arguments{
 \item{v}{A SpatVector object representing a polygon.}
 
-\item{distance}{Logical indicating whether to return the maximum distance (default TRUE).}
+\item{hull}{An optional pre-computed convex hull (SpatVector). If \code{NULL}
+(default), the convex hull is computed internally. Passing a pre-computed
+hull avoids redundant computation when calling from higher-level functions.}
 
-\item{bearing}{Logical indicating whether to return the bearing (default TRUE).}
+\item{distance}{Logical indicating whether to return the maximum distance
+(default \code{TRUE}).}
+
+\item{bearing}{Logical indicating whether to return the bearing (default
+\code{TRUE}).}
 }
 \value{
 A list containing:
 \item{south_point}{SpatVector of the southernmost point}
 \item{north_point}{SpatVector of the northernmost point}
-\item{distance}{Maximum distance in meters}
-\item{bearing}{Geographic bearing from south to north in degrees}
+\item{distance}{Maximum distance in meters (if \code{distance = TRUE})}
+\item{bearing}{Geographic bearing from south to north in degrees (if
+\code{bearing = TRUE})}
 }
 \description{
-Identifies the pair of most distant points and calculate the distance and bearing from the southernmost to the northernmost point.
+Identifies the pair of most distant points on a polygon's convex hull and
+calculates the geodesic distance and bearing from the southernmost to the
+northernmost point.
 }
 \examples{
 \dontrun{

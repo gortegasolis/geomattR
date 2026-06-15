@@ -18,9 +18,18 @@ geographic (lon/lat) and projected CRS appropriately.
 \details{
 \subsection{Main Functions}{
 \itemize{
-\item \code{\link[=calculate_geometric_attributes]{calculate_geometric_attributes()}}: Calculate metrics for one or more polygons (sequential)
-\item \code{\link[=calculate_geometric_attributes_single]{calculate_geometric_attributes_single()}}: Core computation for a single polygon
-\item \code{\link[=calculate_geometric_attributes_parallel]{calculate_geometric_attributes_parallel()}}: Calculate metrics with parallel processing
+\item \code{\link[=calculate_geometric_attributes]{calculate_geometric_attributes()}}: Calculate metrics for one or more
+polygons. Runs sequentially by default; pass a \code{cl} argument for parallel
+execution.
+\item \code{\link[=calculate_geometric_attributes_single]{calculate_geometric_attributes_single()}}: Core computation for a single
+polygon. Optimized to avoid redundant intermediate object creation.
+\item \code{\link[=calculate_geometric_attributes_parallel]{calculate_geometric_attributes_parallel()}}: Backward-compatible wrapper
+that delegates to \code{calculate_geometric_attributes()}.
+}
+}
+
+\subsection{Helper Functions}{
+\itemize{
 \item \code{\link[=get_distant_points]{get_distant_points()}}: Find most distant points on convex hull
 \item \code{\link[=calc_elongation]{calc_elongation()}}: Calculate elongation ratio
 \item \code{\link[=calc_extent_ew]{calc_extent_ew()}}: Calculate east-west extent
@@ -34,7 +43,7 @@ All calculations prioritize accuracy:
 \itemize{
 \item \strong{Area & Perimeter}: Use \code{terra::expanse()} with explicit
 \code{transform = TRUE} for automatic geodesic calculation; perimeter
-is projected to lon/lat as recommended by terra documentation
+is computed on the EPSG:4326 representation
 \item \strong{Distances}: Use explicit \code{method = "geo"} for geodesic calculations
 \item \strong{Automatic Projection}: Non-geographic CRS are handled transparently
 }
@@ -55,6 +64,11 @@ result <- calculate_geometric_attributes(polygon)
 # Calculate specific metrics
 result <- calculate_geometric_attributes(polygon,
   metrics = c("area", "perimeter", "compactness"))
+
+# Parallel processing
+cl <- parallel::makeCluster(2)
+result <- calculate_geometric_attributes(polygon, cl = cl)
+parallel::stopCluster(cl)
 }\if{html}{\out{</div>}}
 }
 }

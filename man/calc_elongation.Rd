@@ -4,18 +4,25 @@
 \alias{calc_elongation}
 \title{Calculate Elongation Ratio from Minimum Bounding Rectangle}
 \usage{
-calc_elongation(v)
+calc_elongation(v, hull = NULL)
 }
 \arguments{
 \item{v}{A SpatVector object representing a polygon.}
+
+\item{hull}{An optional pre-computed convex hull (SpatVector). If \code{NULL}
+(default), the convex hull is computed internally. Passing a pre-computed
+hull avoids redundant computation.}
 }
 \value{
-A numeric value representing the elongation ratio (major/minor axis).
+A numeric value representing the elongation ratio (major/minor axis) of the input polygon.
 Higher values indicate more elongated shapes.
 }
 \description{
 Calculates the elongation ratio of a polygon based on its minimum bounding
 rectangle. The ratio is the major axis length divided by the minor axis length.
+The minimum bounding rectangle is computed from the convex hull of the input polygon.
+It is important to notice that this method assumes the minimum bounding rectangle is unique,
+which may not always be the case. Consider this with caution.
 }
 \examples{
 \dontrun{

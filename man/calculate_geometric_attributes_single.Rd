@@ -29,45 +29,56 @@ geometric attributes.
 }
 \description{
 Calculates geometric attributes for exactly one polygon feature. This is the
-core computational function used by \code{\link{calculate_geometric_attributes}} and
-\code{\link{calculate_geometric_attributes_parallel}}.
+core computational function used internally by
+\code{\link{calculate_geometric_attributes}}.
 }
 \details{
-This function is optimized to process a single polygon and only computes
-intermediate geometric objects (convex hull, centroid, etc.) that are needed
-for the requested metrics.
+This function is optimized to process a single polygon. It computes
+intermediate geometric objects (convex hull, centroid, etc.) only once and
+reuses them across dependent metrics, avoiding redundant computation.
+
+Metric dependencies are resolved automatically: requesting a derived metric
+(e.g., \code{"sinuosity"}) will internally compute its prerequisites
+(\code{perimeter}, \code{maxlength}) even if they are not explicitly
+requested.
 
 \strong{Geodesic Measurements:}
-All measurements use geodesic calculations for accuracy across different coordinate systems.
-Area calculations use \code{terra::expanse()} with automatic lon/lat transformation.
-Perimeter calculations explicitly project to lon/lat (EPSG:4326) if the input is not already
-in a geographic CRS, ensuring accurate geodesic measurements as recommended by terra documentation.
-Distance-based metrics (maxlength, ew_length, ns_length, bearing) use explicit geodesic
-distance calculations via \code{method = "geo"}.
+All measurements use geodesic calculations for accuracy across different
+coordinate systems. The input is internally projected to EPSG:4326 for
+computation and restored to its original CRS before returning.
 
-Area returns the total area in square meters using geodesic methods.
-Perimeter returns the total perimeter length in meters using geodesic methods.
-Compactness is calculated using the Polsby-Popper formula: (4 * pi * Area) / (Perimeter^2). The formula produces values between 0 and 1, where 1 indicates a perfect circle.
-Reock compactness is calculated as the ratio of the polygon's area to the area of its minimum enclosing circle.
-Elongation ratio is calculated as the ratio of the polygon's length to its width based on the minimum bounding rectangle.
-Number of holes counts the number of interior holes within the polygon.
-Hole area returns the total area of all interior holes in square meters using geodesic methods.
-Hole area percentage calculates the percentage of the polygon's total area that is occupied by holes.
-Number of polygons counts the number of separate polygon parts in a multi-part polygon.
-East-West length returns the average east-west extent of the polygon in meters based on the geographic bounding box aligned with the cardinal directions, using geodesic distance calculations.
-North-South length returns the average north-south extent of the polygon in meters based on the geographic bounding box aligned with the cardinal directions, using geodesic distance calculations.
-Maximum length returns the maximum distance in meters between a pair of opposite vertices across the polygon's convex hull, using geodesic calculations.
-Bearing returns the geographic bearing in degrees from the southernmost to the northernmost point of the polygon's convex hull.
-Northerness calculates the cosine of the bearing angle (in radians) to quantify the northward orientation of the polygon.
-Fractal dimension is calculated using the formula: 2 * (log(Perimeter) / log(Area)), providing a measure of shape complexity.
-Sinuosity is calculated as the ratio of the polygon's perimeter to its maximum length.
-Shape index is calculated as: Perimeter / (2 * sqrt(pi * Area)), providing a dimensionless measure of shape complexity.
-Circularity ratio is calculated as: (4 * Area) / (pi * Maximum Length^2), indicating how closely the shape resembles a circle.
-Decimal longitude returns the centroid's longitude in decimal degrees.
-Decimal latitude returns the centroid's latitude in decimal degrees.
+\itemize{
+\item \strong{area}: Total area in square meters (geodesic via
+\code{terra::expanse()}).
+\item \strong{perimeter}: Total perimeter in meters (geodesic via
+\code{terra::perim()}).
+\item \strong{compactness}: Polsby-Popper formula:
+\eqn{(4\pi \cdot A) / P^2}{(4*pi*A)/P^2}. Values 0--1; 1 = circle.
+\item \strong{reock}: Ratio of polygon area to minimum enclosing circle area.
+\item \strong{elongation_rectangle}: Major/minor axis ratio of the minimum
+bounding rectangle.
+\item \strong{num_holes}: Count of interior rings (holes).
+\item \strong{hole_area}: Total hole area in square meters.
+\item \strong{hole_area_pct}: Percentage of total area occupied by holes.
+\item \strong{num_polygons}: Number of parts in a multi-part polygon.
+\item \strong{ew_length}: Average east-west extent in meters (geodesic).
+\item \strong{ns_length}: Average north-south extent in meters (geodesic).
+\item \strong{maxlength}: Maximum geodesic distance across the convex hull.
+\item \strong{bearing}: Bearing (degrees) from southernmost to northernmost
+hull vertex.
+\item \strong{northerness}: \eqn{\cos(\text{bearing} \cdot \pi / 180)}{cos(bearing*pi/180)}.
+\item \strong{fractaldimension}: \eqn{2 \log(P) / \log(A)}{2*log(P)/log(A)}.
+\item \strong{sinuosity}: Perimeter / maxlength.
+\item \strong{shape_index}: \eqn{P / (2\sqrt{\pi A})}{P/(2*sqrt(pi*A))}.
+\item \strong{circularity_ratio}: \eqn{4A / (\pi \cdot L^2)}{4A/(pi*L^2)}
+where L = maxlength.
+\item \strong{decimallongitude}: Centroid longitude (decimal degrees).
+\item \strong{decimallatitude}: Centroid latitude (decimal degrees).
+}
 
-For processing multiple polygons, use \code{\link{calculate_geometric_attributes}}
-(sequential) or \code{\link{calculate_geometric_attributes_parallel}} (parallel).
+For processing multiple polygons use
+\code{\link{calculate_geometric_attributes}} which wraps this function and
+supports both sequential and parallel execution.
 }
 \examples{
 \dontrun{

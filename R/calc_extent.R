@@ -21,8 +21,10 @@ calc_extent_ew <- function(v) {
   pt3 <- terra::vect(cbind(b$xmin, b$ymax), crs = terra::crs(v))
   pt4 <- terra::vect(cbind(b$xmax, b$ymax), crs = terra::crs(v))
   
-  mean(terra::distance(pt1, pt2, method = "geo"), 
-       terra::distance(pt3, pt4, method = "geo"))
+  dist1 <- terra::distance(pt1, pt2, method = "geo")
+  dist2 <- terra::distance(pt3, pt4, method = "geo")
+
+  mean(c(dist1, dist2))
 }
 
 #' Calculate North-South Extent
@@ -48,6 +50,8 @@ calc_extent_ns <- function(v) {
   pt3 <- terra::vect(cbind(b$xmin, b$ymax), crs = terra::crs(v))
   pt4 <- terra::vect(cbind(b$xmax, b$ymax), crs = terra::crs(v))
   
-  mean(terra::distance(pt1, pt3, method = "geo"), 
-       terra::distance(pt2, pt4, method = "geo"))
+  dist1 <- terra::distance(pt1, pt3, method = "geo")
+  dist2 <- terra::distance(pt2, pt4, method = "geo")
+
+  mean(c(dist1, dist2))
 }

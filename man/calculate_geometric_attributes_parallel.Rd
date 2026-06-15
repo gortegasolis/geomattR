@@ -2,7 +2,7 @@
 % Please edit documentation in R/calculate_geometric_attributes_parallel.R
 \name{calculate_geometric_attributes_parallel}
 \alias{calculate_geometric_attributes_parallel}
-\title{Calculate Geometric Attributes in Parallel}
+\title{Calculate Geometric Attributes in Parallel (Deprecated Wrapper)}
 \usage{
 calculate_geometric_attributes_parallel(v, metrics = "all", cl = NULL)
 }
@@ -10,35 +10,37 @@ calculate_geometric_attributes_parallel(v, metrics = "all", cl = NULL)
 \item{v}{A SpatVector object representing one or more polygons.}
 
 \item{metrics}{Character string or vector specifying which metrics to calculate.
-See \code{\link{calculate_geometric_attributes}} for available options.}
+Options are:
+\itemize{
+\item \code{"all"} (default): Calculate all available metrics
+\item A single metric name as a string: Calculate only that metric
+\item A character vector of metric names: Calculate specified metrics
+}
+Available metric names: "area", "perimeter", "compactness", "reock",
+"elongation_rectangle", "num_holes", "hole_area", "hole_area_pct",
+"num_polygons", "ew_length", "ns_length", "maxlength", "bearing",
+"northerness", "fractaldimension", "sinuosity", "shape_index",
+"circularity_ratio", "decimallongitude", "decimallatitude"}
 
-\item{cl}{A cluster object created by \code{\link[parallel:makeCluster]{parallel::makeCluster()}}, or NULL (default).
-If NULL, the function will process polygons sequentially. To enable parallel
-processing, pass an explicit cluster object.}
+\item{cl}{A cluster object created by \code{\link[parallel]{makeCluster}}, or
+\code{NULL} (default). When \code{NULL} features are processed sequentially.
+Passing a cluster enables parallel processing across the cluster workers.}
 }
 \value{
-A SpatVector object with the same structure as input, with added
-columns containing the requested geometric attributes.
+A SpatVector object with added columns containing the requested
+geometric attributes. Equivalent to calling
+\code{calculate_geometric_attributes(v, metrics, cl)}.
 }
 \description{
-Calculates geometric attributes for multiple polygons. If a cluster is provided,
-processes polygons in parallel; otherwise defaults to sequential processing.
+This function is retained for backward compatibility. It delegates to
+\code{\link{calculate_geometric_attributes}} which now natively supports
+parallel execution via the \code{cl} argument.
 }
 \details{
-This function processes each polygon independently using the internal
-single-polygon function. If a cluster is provided via the \code{cl}
-parameter, it will process polygons in parallel. Otherwise, it defaults to
-sequential processing (equivalent to calling \code{\link{calculate_geometric_attributes}}).
-
-For a single polygon, this function simply calls
-\code{\link{calculate_geometric_attributes}} directly.
-
-To use parallel processing, create a cluster first:
-
-\if{html}{\out{<div class="sourceCode r">}}\preformatted{cl <- parallel::makeCluster(parallel::detectCores() - 1)
-result <- calculate_geometric_attributes_parallel(polygons, cl = cl)
-parallel::stopCluster(cl)
-}\if{html}{\out{</div>}}
+New code should use \code{\link{calculate_geometric_attributes}} directly
+with the \code{cl} parameter. This wrapper exists so that existing code using
+\code{calculate_geometric_attributes_parallel()} continues to work without
+modification.
 }
 \examples{
 \dontrun{
