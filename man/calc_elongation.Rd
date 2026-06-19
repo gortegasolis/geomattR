@@ -14,14 +14,20 @@ calc_elongation(v, hull = NULL)
 hull avoids redundant computation.}
 }
 \value{
-A numeric value representing the elongation ratio (major/minor axis) of the input polygon.
+A numeric value representing the elongation ratio of the input
+polygon from the minimum-bounding-rectangle approximation.
 Higher values indicate more elongated shapes.
 }
 \description{
 Calculates the elongation ratio of a polygon based on its minimum bounding
-rectangle. The ratio is the major axis length divided by the minor axis length.
-The minimum bounding rectangle is computed from the convex hull of the input polygon.
-It is important to notice that this method assumes the minimum bounding rectangle is unique,
+rectangle. The minimum bounding rectangle is computed from the convex hull of
+the input polygon. In the current implementation, elongation is computed as
+the ratio between:
+\itemize{
+\item the mean of the two largest pairwise corner-to-corner geodesic distances
+\item the mean of the two smallest pairwise corner-to-corner geodesic distances
+}
+This approximation assumes the minimum bounding rectangle is unique,
 which may not always be the case. Consider this with caution.
 }
 \examples{
