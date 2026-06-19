@@ -23,8 +23,6 @@ polygons. Runs sequentially by default; pass a \code{cl} argument for parallel
 execution.
 \item \code{\link[=calculate_geometric_attributes_single]{calculate_geometric_attributes_single()}}: Core computation for a single
 polygon. Optimized to avoid redundant intermediate object creation.
-\item \code{\link[=calculate_geometric_attributes_parallel]{calculate_geometric_attributes_parallel()}}: Backward-compatible wrapper
-that delegates to \code{calculate_geometric_attributes()}.
 }
 }
 

@@ -32,6 +32,11 @@ Identifies the pair of most distant points on a polygon's convex hull and
 calculates the geodesic distance and bearing from the southernmost to the
 northernmost point.
 }
+\details{
+The most distant hull-vertex pair is found with rotating calipers over the
+convex hull (linear in the number of hull vertices), then geodesic distances
+are evaluated only for candidate antipodal pairs.
+}
 \examples{
 \dontrun{
 library(terra)

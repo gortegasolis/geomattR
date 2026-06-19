@@ -176,7 +176,7 @@ print(results[, c("area", "perimeter", "compactness")])
 
 ## Parallel Processing
 
-For large datasets with many polygons, use `calculate_geometric_attributes_parallel()` for faster processing:
+For large datasets with many polygons, use the `cl` argument in `calculate_geometric_attributes()` to run calculations in parallel:
 
 ```{r parallel}
 library(parallel)
@@ -188,8 +188,8 @@ polygons <- rbind(poly1, poly2)  # From previous example
 n_cores <- detectCores() - 1
 cl <- makeCluster(n_cores)
 
-# Process in parallel
-results <- calculate_geometric_attributes_parallel(
+# Process in parallel using the main function
+results <- calculate_geometric_attributes(
   polygons,
   metrics = "all",
   cl = cl
@@ -321,11 +321,11 @@ print(head(analyzed_buildings))
 
 ### Issue: Slow performance with large datasets
 
-**Solution**: Use parallel processing for better performance:
+**Solution**: Use parallel processing via the `cl` argument for better performance:
 ```{r performance}
 # For 100,000+ polygons, parallel processing is recommended
 cl <- makeCluster(detectCores() - 1)
-results <- calculate_geometric_attributes_parallel(
+results <- calculate_geometric_attributes(
   large_polygon_set,
   metrics = "all",
   cl = cl

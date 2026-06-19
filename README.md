@@ -123,7 +123,7 @@ For parallel processing:
 library(parallel)
 
 cl <- makeCluster(detectCores() - 1)
-results <- calculate_geometric_attributes_parallel(polygons, cl = cl)
+results <- calculate_geometric_attributes(polygons, cl = cl)
 stopCluster(cl)
 ```
 
@@ -153,7 +153,6 @@ Full documentation is available in R:
 ``` r
 ?calculate_geometric_attributes
 ?calculate_geometric_attributes_single
-?calculate_geometric_attributes_parallel
 ?get_distant_points
 ?calc_elongation
 ```
@@ -185,6 +184,4 @@ Contributions are welcome! Please open an issue or submit a pull request on [Git
 
 Gabriel Ortega-Solis ([g.ortega.solis@gmail.com](mailto:g.ortega.solis@gmail.com))
 ORCID: [0000-0002-0516-5694](https://orcid.org/0000-0002-0516-5694)
-pol_with_attributes <- calculate_geometric_attributes(pol)
-```
 

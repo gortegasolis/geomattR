@@ -33,6 +33,77 @@
 #' polygon <- vect("path/to/polygon.shp")
 #' distant_pts <- get_distant_points(polygon)
 #' }
+get_distant_points <- function(v, hull = NULL, distance = TRUE, bearing = TRUE) {
+  if (is.null(hull)) {
+    hull <- terra::hull(v, type = "convex")
+  }
+  coords <- normalize_hull_coords(terra::crds(hull))
+  n <- nrow(coords)
+  points_hull <- terra::vect(coords, crs = terra::crs(v))
+
+  if (n == 1L) {
+    subset_hull <- points_hull[c(1, 1), ]
+  } else {
+    candidate_pairs <- find_antipodal_pairs(coords)
+
+    best_dist <- -Inf
+    best_pair <- candidate_pairs[1, ]
+    best_south <- c(Inf, Inf)
+
+    for (i in seq_len(nrow(candidate_pairs))) {
+      pair <- candidate_pairs[i, ]
+      p1 <- points_hull[pair[1], ]
+      p2 <- points_hull[pair[2], ]
+      d <- terra::distance(p1, p2, method = "geo")
+
+      pair_coords <- coords[pair, , drop = FALSE]
+      order_idx <- order(pair_coords[, 2], pair_coords[, 1])
+      south_coords <- pair_coords[order_idx[1], ]
+
+      better <- FALSE
+      if (d > best_dist + 1e-9) {
+        better <- TRUE
+      } else if (abs(d - best_dist) <= 1e-9) {
+        if (south_coords[2] < best_south[2] - 1e-12 ||
+          (abs(south_coords[2] - best_south[2]) <= 1e-12 &&
+            south_coords[1] < best_south[1] - 1e-12)) {
+          better <- TRUE
+        }
+      }
+
+      if (better) {
+        best_dist <- d
+        best_pair <- pair
+        best_south <- south_coords
+      }
+    }
+
+    subset_hull <- points_hull[best_pair, ]
+  }
+
+  coords_subset <- terra::crds(subset_hull)
+  order_idx <- order(coords_subset[, 2], coords_subset[, 1])
+  south_point <- subset_hull[order_idx[1], ]
+  north_point <- subset_hull[order_idx[2], ]
+
+  result <- list(
+    south_point = south_point,
+    north_point = north_point
+  )
+
+  if (distance) {
+    result$distance <- terra::distance(south_point, north_point, method = "geo")
+  }
+
+  if (bearing) {
+    result$bearing <- geosphere::bearing(
+      terra::crds(south_point),
+      terra::crds(north_point)
+    )
+  }
+
+  return(result)
+}
 
 normalize_hull_coords <- function(coords) {
   xy <- as.matrix(coords[, 1:2, drop = FALSE])
@@ -118,76 +189,4 @@ find_antipodal_pairs <- function(coords, tol = 1e-12) {
 
   pairs <- t(apply(pairs, 1, function(p) sort(as.integer(p))))
   unique(pairs)
-}
-
-get_distant_points <- function(v, hull = NULL, distance = TRUE, bearing = TRUE) {
-  if (is.null(hull)) {
-    hull <- terra::hull(v, type = "convex")
-  }
-  coords <- normalize_hull_coords(terra::crds(hull))
-  n <- nrow(coords)
-  points_hull <- terra::vect(coords, crs = terra::crs(v))
-
-  if (n == 1L) {
-    subset_hull <- points_hull[c(1, 1), ]
-  } else {
-    candidate_pairs <- find_antipodal_pairs(coords)
-
-    best_dist <- -Inf
-    best_pair <- candidate_pairs[1, ]
-    best_south <- c(Inf, Inf)
-
-    for (i in seq_len(nrow(candidate_pairs))) {
-      pair <- candidate_pairs[i, ]
-      p1 <- points_hull[pair[1], ]
-      p2 <- points_hull[pair[2], ]
-      d <- terra::distance(p1, p2, method = "geo")
-
-      pair_coords <- coords[pair, , drop = FALSE]
-      order_idx <- order(pair_coords[, 2], pair_coords[, 1])
-      south_coords <- pair_coords[order_idx[1], ]
-
-      better <- FALSE
-      if (d > best_dist + 1e-9) {
-        better <- TRUE
-      } else if (abs(d - best_dist) <= 1e-9) {
-        if (south_coords[2] < best_south[2] - 1e-12 ||
-          (abs(south_coords[2] - best_south[2]) <= 1e-12 &&
-            south_coords[1] < best_south[1] - 1e-12)) {
-          better <- TRUE
-        }
-      }
-
-      if (better) {
-        best_dist <- d
-        best_pair <- pair
-        best_south <- south_coords
-      }
-    }
-
-    subset_hull <- points_hull[best_pair, ]
-  }
-
-  coords_subset <- terra::crds(subset_hull)
-  order_idx <- order(coords_subset[, 2], coords_subset[, 1])
-  south_point <- subset_hull[order_idx[1], ]
-  north_point <- subset_hull[order_idx[2], ]
-
-  result <- list(
-    south_point = south_point,
-    north_point = north_point
-  )
-
-  if (distance) {
-    result$distance <- terra::distance(south_point, north_point, method = "geo")
-  }
-
-  if (bearing) {
-    result$bearing <- geosphere::bearing(
-      terra::crds(south_point),
-      terra::crds(north_point)
-    )
-  }
-
-  return(result)
 }

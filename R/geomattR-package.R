@@ -19,8 +19,6 @@
 #'   execution.
 #' - [calculate_geometric_attributes_single()]: Core computation for a single
 #'   polygon. Optimized to avoid redundant intermediate object creation.
-#' - [calculate_geometric_attributes_parallel()]: Backward-compatible wrapper
-#'   that delegates to `calculate_geometric_attributes()`.
 #'
 #' ## Helper Functions
 #'
