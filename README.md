@@ -5,7 +5,7 @@
 
 ## Overview
 
-`geomattR` provides a comprehensive toolkit for calculating geometric and morphometric attributes of spatial polygons. It computes area, perimeter, compactness, elongation, orientation, fractal dimension, and various shape indices using **geodesic measurements** for accuracy across different coordinate reference systems.
+`geomattR` provides a comprehensive toolkit for calculating geometric and morphometric attributes of spatial polygons. It computes area, perimeter, compactness, elongation, orientation, fractal dimension, and various shape indices using geodesic core measurements for accuracy across different coordinate reference systems.
 
 This package is particularly useful for:
 - **Geospatial analysts** analyzing shape and size of geographic features
@@ -16,7 +16,7 @@ This package is particularly useful for:
 - **Political scientists** examining electoral district shapes
 - **Epidemiologists** analyzing spatial spread patterns
 
-All calculations use the [`terra`](https://github.com/rspatial/terra) package for efficient spatial data handling, with explicit geodesic methods ensuring accurate results regardless of input CRS (geographic or projected).
+Core spatial calculations use the [`terra`](https://github.com/rspatial/terra) package for efficient spatial data handling and geodesic measurement support, while [`geosphere`](https://cran.r-project.org/web/packages/geosphere/) is used for bearing estimation. Distance- and area-based metrics are computed, and shape indices are derived from those quantities.
 
 ## Installation
 
@@ -58,13 +58,13 @@ result_subset <- calculate_geometric_attributes(
 #### Size Metrics
 - **area**: Total area in square meters (geodesic)
 - **perimeter**: Total perimeter length in meters (geodesic)
-- **hole_area**: Total area of interior holes
-- **hole_area_pct**: Percentage of polygon occupied by holes
+- **hole_area**: Total area of interior holes in square meters
+- **hole_area_pct**: Percentage of polygon occupied by holes (derived from geodesic area)
 
 #### Shape Metrics
 - **compactness**: Polsby-Popper compactness (0-1, where 1 = perfect circle)
 - **reock**: Reock compactness (area/minimum enclosing circle area)
-- **elongation_rectangle**: Elongation ratio from minimum bounding rectangle
+- **elongation_rectangle**: Elongation ratio from minimum bounding rectangle using averaged longest/shortest corner-to-corner geodesic distances
 - **shape_index**: Dimensionless shape complexity measure
 - **circularity_ratio**: How closely polygon resembles a circle
 - **fractaldimension**: Boundary complexity measure (typically 1-2)
@@ -79,13 +79,13 @@ result_subset <- calculate_geometric_attributes(
 #### Geometry Metrics
 - **num_holes**: Number of interior holes
 - **num_polygons**: Number of multi-part polygon components
-- **decimallongitude**: Centroid X coordinate
-- **decimallatitude**: Centroid Y coordinate
+- **decimallongitude**: Centroid longitude in decimal degrees (computed in EPSG:4326)
+- **decimallatitude**: Centroid latitude in decimal degrees (computed in EPSG:4326)
 - **sinuosity**: Perimeter to maximum length ratio
 
 ### Geodesic Calculations
 
-`geomattR` prioritizes geodesic calculations to ensure accuracy across different coordinate reference systems (CRS). When input polygons are in a projected CRS, the package automatically transforms them to a geographic CRS (WGS84) for geodesic measurements, then returns results in the original CRS.
+`geomattR` prioritizes geodesic calculations for foundational spatial quantities. Area, perimeter, extent, maximum distance, and bearing are computed geodesically after transforming inputs to WGS84 (EPSG:4326) when needed. Derived shape indices (for example compactness, sinuosity, and fractaldimension) are calculated from those geodesic base quantities. The output geometry is then restored to the original input CRS.
 
 ## Example: Analyzing Building Footprints
 
@@ -160,6 +160,7 @@ Full documentation is available in R:
 ## Related Packages
 
 - **[terra](https://github.com/rspatial/terra)**: Foundational spatial data handling (required)
+- **[geosphere](https://cran.r-project.org/web/packages/geosphere/)**: Geodetic bearing calculations (required)
 - **[sf](https://r-spatial.github.io/sf/)**: Alternative vector format support
 - **[NLMR](https://github.com/ropensci/NLMR)**: Neutral landscape models with shape metrics
 - **[landscapemetrics](https://r-spatial.github.io/landscapemetrics/)**: Comprehensive landscape ecology metrics
