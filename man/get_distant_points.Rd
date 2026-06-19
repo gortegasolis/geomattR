@@ -38,9 +38,8 @@ convex hull (linear in the number of hull vertices), then geodesic distances
 are evaluated only for candidate antipodal pairs.
 }
 \examples{
-\dontrun{
 library(terra)
-polygon <- vect("path/to/polygon.shp")
+coords <- cbind(c(0, 0, 1, 1, 0), c(0, 1, 1, 0, 0))
+polygon <- vect(coords, type = "polygon", crs = "EPSG:4326")
 distant_pts <- get_distant_points(polygon)
-}
 }

@@ -28,11 +28,10 @@
 #' @export
 #'
 #' @examples
-#' \dontrun{
 #' library(terra)
-#' polygon <- vect("path/to/polygon.shp")
+#' coords <- cbind(c(0, 0, 1, 1, 0), c(0, 1, 1, 0, 0))
+#' polygon <- vect(coords, type = "polygon", crs = "EPSG:4326")
 #' distant_pts <- get_distant_points(polygon)
-#' }
 get_distant_points <- function(v, hull = NULL, distance = TRUE, bearing = TRUE) {
   if (is.null(hull)) {
     hull <- terra::hull(v, type = "convex")

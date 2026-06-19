@@ -9,11 +9,10 @@
 #' @export
 #'
 #' @examples
-#' \dontrun{
 #' library(terra)
-#' polygon <- vect("path/to/polygon.shp")
+#' coords <- cbind(c(0, 0, 1, 1, 0), c(0, 1, 1, 0, 0))
+#' polygon <- vect(coords, type = "polygon", crs = "EPSG:4326")
 #' ew_extent <- calc_extent_ew(polygon)
-#' }
 calc_extent_ew <- function(v) {
   b <- terra::ext(v)
   pt1 <- terra::vect(cbind(b$xmin, b$ymin), crs = terra::crs(v))
@@ -38,11 +37,10 @@ calc_extent_ew <- function(v) {
 #' @export
 #'
 #' @examples
-#' \dontrun{
 #' library(terra)
-#' polygon <- vect("path/to/polygon.shp")
+#' coords <- cbind(c(0, 0, 1, 1, 0), c(0, 1, 1, 0, 0))
+#' polygon <- vect(coords, type = "polygon", crs = "EPSG:4326")
 #' ns_extent <- calc_extent_ns(polygon)
-#' }
 calc_extent_ns <- function(v) {
   b <- terra::ext(v)
   pt1 <- terra::vect(cbind(b$xmin, b$ymin), crs = terra::crs(v))

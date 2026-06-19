@@ -81,11 +81,11 @@ For processing multiple polygons use
 supports both sequential and parallel execution.
 }
 \examples{
-\dontrun{
 library(terra)
 
-# Load a single polygon
-polygon <- vect("path/to/polygon.shp")[1, ]
+# Create a sample 1-degree square polygon near the equator
+coords <- cbind(c(0, 0, 1, 1, 0), c(0, 1, 1, 0, 0))
+polygon <- vect(coords, type = "polygon", crs = "EPSG:4326")
 
 # Calculate all attributes
 result <- calculate_geometric_attributes_single(polygon)
@@ -93,5 +93,4 @@ result <- calculate_geometric_attributes_single(polygon)
 # Calculate only specific metrics
 result <- calculate_geometric_attributes_single(polygon,
   metrics = c("area", "perimeter", "compactness"))
-}
 }

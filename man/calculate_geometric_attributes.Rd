@@ -100,11 +100,11 @@ rectangle.
 }
 }
 \examples{
-\dontrun{
 library(terra)
 
-# Load polygon shapefile
-polygons <- vect("path/to/polygons.shp")
+# Create a sample 1-degree square polygon near the equator
+coords <- cbind(c(0, 0, 1, 1, 0), c(0, 1, 1, 0, 0))
+polygons <- vect(coords, type = "polygon", crs = "EPSG:4326")
 
 # Sequential processing (default)
 result <- calculate_geometric_attributes(polygons)
@@ -113,8 +113,9 @@ result <- calculate_geometric_attributes(polygons)
 result <- calculate_geometric_attributes(polygons,
   metrics = c("area", "perimeter", "compactness"))
 
-# Parallel processing with an explicit cluster
-cl <- parallel::makeCluster(parallel::detectCores() - 1)
+\dontrun{
+# Parallel processing with an explicit cluster (use small number of cores for checks)
+cl <- parallel::makeCluster(2)
 result <- calculate_geometric_attributes(polygons, cl = cl)
 parallel::stopCluster(cl)
 }

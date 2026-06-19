@@ -16,9 +16,8 @@ A numeric value representing the average north-south extent in meters.
 Calculates the average north-south extent of a polygon based on its geographic bounding box.
 }
 \examples{
-\dontrun{
 library(terra)
-polygon <- vect("path/to/polygon.shp")
+coords <- cbind(c(0, 0, 1, 1, 0), c(0, 1, 1, 0, 0))
+polygon <- vect(coords, type = "polygon", crs = "EPSG:4326")
 ns_extent <- calc_extent_ns(polygon)
-}
 }

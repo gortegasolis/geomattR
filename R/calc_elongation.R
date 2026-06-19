@@ -17,11 +17,10 @@
 #' @export
 #'
 #' @examples
-#' \dontrun{
 #' library(terra)
-#' polygon <- vect("path/to/polygon.shp")
+#' coords <- cbind(c(0, 0, 1, 1, 0), c(0, 1, 1, 0, 0))
+#' polygon <- vect(coords, type = "polygon", crs = "EPSG:4326")
 #' elongation <- calc_elongation(polygon)
-#' }
 calc_elongation <- function(v, hull = NULL) {
   if (is.null(hull)) {
     hull <- terra::hull(v, type = "convex")
