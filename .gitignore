@@ -13,3 +13,7 @@ inst/doc/
 
 # Common local folders not needed in repo
 .vscode/
+
+# Generated PDF manuals
+geomattR-manual.pdf
+*.pdf
