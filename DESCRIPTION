@@ -3,14 +3,15 @@ Type: Package
 Title: Calculate Geometric Attributes of Spatial Polygons
 Version: 0.1.0
 Authors@R: 
-    person("Gabriel", "Ortega-Solis", , "g.ortega.solis@gmail.com", role = c("aut", "cre"),
+    person("Gabriel", "Ortega-Solís", , "g.ortega.solis@gmail.com", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0002-0516-5694"))
 Description: Provides a comprehensive toolkit for calculating geometric and morphometric
     attributes of spatial polygons. Computes metrics including area, perimeter, compactness,
     elongation, orientation (bearing), fractal dimension, and various shape indices. All
     measurements use geodesic calculations for accuracy across different coordinate reference
     systems, automatically handling geographic (lon/lat) data appropriately. Designed for
-    geospatial analysts, urban planners, and environmental scientists working with 'terra'
+    geospatial analysts, urban planners, and environmental scientists. The package relies 
+    heavily on 'terra'
     vector data objects <https://github.com/rspatial/terra>.
 License: MIT + file LICENSE
 URL: https://github.com/gortegasolis/geomattR
