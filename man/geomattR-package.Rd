@@ -79,7 +79,7 @@ Useful links:
 
 }
 \author{
-\strong{Maintainer}: Gabriel Ortega-Solis \email{g.ortega.solis@gmail.com} (\href{https://orcid.org/0000-0002-0516-5694}{ORCID})
+\strong{Maintainer}: Gabriel Ortega-Solís \email{g.ortega.solis@gmail.com} (\href{https://orcid.org/0000-0002-0516-5694}{ORCID})
 
 }
 \keyword{internal}

@@ -182,6 +182,6 @@ Contributions are welcome! Please open an issue or submit a pull request on [Git
 
 ## Author
 
-Gabriel Ortega-Solis ([g.ortega.solis@gmail.com](mailto:g.ortega.solis@gmail.com))
+Gabriel Ortega-Solís ([g.ortega.solis@gmail.com](mailto:g.ortega.solis@gmail.com))
 ORCID: [0000-0002-0516-5694](https://orcid.org/0000-0002-0516-5694)
 
