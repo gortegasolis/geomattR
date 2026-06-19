@@ -17,3 +17,6 @@ inst/doc/
 # Generated PDF manuals
 geomattR-manual.pdf
 *.pdf
+
+# Quarto check artifacts
+.quarto/
