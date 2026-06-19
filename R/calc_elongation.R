@@ -1,9 +1,14 @@
 #' Calculate Elongation Ratio from Minimum Bounding Rectangle
 #'
 #' Calculates the elongation ratio of a polygon based on its minimum bounding
-#' rectangle. The ratio is the major axis length divided by the minor axis length.
-#' The minimum bounding rectangle is computed from the convex hull of the input polygon.
-#' It is important to notice that this method assumes the minimum bounding rectangle is unique, 
+#' rectangle. The minimum bounding rectangle is computed from the convex hull of
+#' the input polygon. In the current implementation, elongation is computed as
+#' the ratio between:
+#' \itemize{
+#'   \item the mean length of the two largest sides
+#'   \item the mean length of the two smallest sides
+#' }
+#' This approximation assumes the minimum bounding rectangle is unique, 
 #' which may not always be the case. Consider this with caution.
 #'
 #' @param v A SpatVector object representing a polygon.
@@ -11,7 +16,8 @@
 #'   (default), the convex hull is computed internally. Passing a pre-computed
 #'   hull avoids redundant computation.
 #'
-#' @return A numeric value representing the elongation ratio (major/minor axis) of the input polygon.
+#' @return A numeric value representing the elongation ratio of the input
+#'   polygon from the current minimum-bounding-rectangle approximation.
 #'   Higher values indicate more elongated shapes.
 #'
 #' @export

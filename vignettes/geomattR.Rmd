@@ -17,9 +17,9 @@ knitr::opts_chunk$set(
 
 ## Introduction
 
-`geomattR` provides tools for calculating geometric and morphometric attributes of spatial polygons. Whether you're analyzing building footprints, administrative boundaries, habitat patches, or land parcels, this package makes it easy to extract meaningful shape and size measurements using geodesic calculations for accuracy.
+`geomattR` provides tools for calculating geometric and morphometric attributes of spatial polygons. Whether you're analyzing building footprints, administrative boundaries, habitat patches, or land parcels, this package makes it easy to extract meaningful shape and size measurements using geodesic base calculations for accuracy.
 
-All measurements in geomattR use geodesic methods, ensuring accurate results regardless of whether your data uses geographic (lon/lat) or projected coordinate reference systems.
+Distance and area foundations in geomattR are computed geodesically, then used to derive higher-level shape indices. This keeps results consistent when your input data uses geographic (lon/lat) or projected coordinate reference systems.
 
 ## Installation
 
@@ -28,7 +28,7 @@ Install geomattR from GitHub:
 ```{r setup}
 # Install if you haven't already
 # install.packages("devtools")
-devtools::install_github("gortegasolis/geomattR")
+# devtools::install_github("gortegasolis/geomattR")
 
 library(geomattR)
 library(terra)
@@ -85,7 +85,7 @@ polygon_with_shape <- calculate_geometric_attributes(
     "shape_index",           # Dimensionless shape complexity
     "circularity_ratio",     # Based on max length
     "fractaldimension",      # Boundary complexity
-    "elongation_rectangle"   # Ratio of major to minor axis
+    "elongation_rectangle"   # Ratio from minimum bounding rectangle approximation
   )
 )
 
@@ -178,7 +178,7 @@ print(results[, c("area", "perimeter", "compactness")])
 
 For large datasets with many polygons, use the `cl` argument in `calculate_geometric_attributes()` to run calculations in parallel:
 
-```{r parallel}
+```{r parallel, eval=FALSE}
 library(parallel)
 
 # Create multiple polygons
@@ -198,9 +198,14 @@ results <- calculate_geometric_attributes(
 # Clean up
 stopCluster(cl)
 
-# Results are identical to sequential processing
+# Results should be equivalent to sequential processing
+# (allowing for tiny floating-point differences)
 print(head(results))
 ```
+
+This chunk is shown for reproducibility but is not executed during vignette
+build because parallel workers can invalidate external pointers for in-memory
+`terra` objects in isolated check environments.
 
 ## Handling Geographic vs. Projected CRS
 
@@ -322,7 +327,7 @@ print(head(analyzed_buildings))
 ### Issue: Slow performance with large datasets
 
 **Solution**: Use parallel processing via the `cl` argument for better performance:
-```{r performance}
+```{r performance, eval=FALSE}
 # For 100,000+ polygons, parallel processing is recommended
 cl <- makeCluster(detectCores() - 1)
 results <- calculate_geometric_attributes(

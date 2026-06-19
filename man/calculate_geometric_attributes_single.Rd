@@ -43,9 +43,10 @@ Metric dependencies are resolved automatically: requesting a derived metric
 requested.
 
 \strong{Geodesic Measurements:}
-All measurements use geodesic calculations for accuracy across different
-coordinate systems. The input is internally projected to EPSG:4326 for
-computation and restored to its original CRS before returning.
+Core spatial quantities are computed geodesically for accuracy across
+different coordinate systems. The input is internally projected to EPSG:4326
+for computation and restored to its original CRS before returning.
+Derived shape indices are then calculated from these geodesic base values.
 
 \itemize{
 \item \strong{area}: Total area in square meters (geodesic via
@@ -55,8 +56,9 @@ computation and restored to its original CRS before returning.
 \item \strong{compactness}: Polsby-Popper formula:
 \eqn{(4\pi \cdot A) / P^2}{(4*pi*A)/P^2}. Values 0--1; 1 = circle.
 \item \strong{reock}: Ratio of polygon area to minimum enclosing circle area.
-\item \strong{elongation_rectangle}: Major/minor axis ratio of the minimum
-bounding rectangle.
+\item \strong{elongation_rectangle}: Ratio from the minimum bounding
+rectangle computed as mean(largest two sides lengths) /
+mean(smallest two sides lengths).
 \item \strong{num_holes}: Count of interior rings (holes).
 \item \strong{hole_area}: Total hole area in square meters.
 \item \strong{hole_area_pct}: Percentage of total area occupied by holes.
