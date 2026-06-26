@@ -177,10 +177,10 @@ cat("Testing package functions...\n\n")
 coords <- cbind(c(0, 0, 1, 1, 0), c(0, 1, 1, 0, 0))
 pol <- vect(coords, type='polygon', crs='EPSG:4326')
 
-# Test 1: Single feature with specific metrics
-cat("Test 1: calculate_geometric_attributes_single()... ")
+# Test 1: Single feature with specific metrics (internal function)
+cat("Test 1: .calculate_geometric_attributes_single()... ")
 tryCatch({
-    result <- calculate_geometric_attributes_single(pol, metrics = c("area", "perimeter"))
+    result <- geomattR:::.calculate_geometric_attributes_single(pol, metrics = c("area", "perimeter"))
     if (nrow(result) == 1 && "area" %in% names(result)) {
         cat("PASSED\n")
     } else {
