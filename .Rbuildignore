@@ -3,3 +3,5 @@
 ^\.vscode$
 ^README\.Rmd$
 ^LICENSE\.md$
+^build_check\.sh$
+^\.quarto$

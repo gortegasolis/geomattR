@@ -20,3 +20,6 @@ geomattR-manual.pdf
 
 # Quarto check artifacts
 .quarto/
+
+# Local developer build and check scripts
+build_check.sh
