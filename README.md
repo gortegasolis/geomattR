@@ -152,7 +152,6 @@ Full documentation is available in R:
 
 ``` r
 ?calculate_geometric_attributes
-?calculate_geometric_attributes_single
 ?get_distant_points
 ?calc_elongation
 ```

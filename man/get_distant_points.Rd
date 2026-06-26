@@ -4,28 +4,50 @@
 \alias{get_distant_points}
 \title{Find largest distance between a pair of opposite vertices}
 \usage{
-get_distant_points(v, hull = NULL, distance = TRUE, bearing = TRUE)
+get_distant_points(
+  v,
+  isHull = FALSE,
+  distance = TRUE,
+  bearing = TRUE,
+  output = "points",
+  by_feature = FALSE
+)
 }
 \arguments{
-\item{v}{A SpatVector object representing a polygon.}
+\item{v}{A SpatVector object representing a polygon, or a pre-computed convex hull if \code{isHull = TRUE}.}
 
-\item{hull}{An optional pre-computed convex hull (SpatVector). If \code{NULL}
-(default), the convex hull is computed internally. Passing a pre-computed
-hull avoids redundant computation when calling from higher-level functions.}
+\item{isHull}{Logical. If \code{TRUE}, \code{v} is treated as a pre-computed convex hull.
+If \code{FALSE} (default), the convex hull is computed internally.}
 
 \item{distance}{Logical indicating whether to return the maximum distance
 (default \code{TRUE}).}
 
 \item{bearing}{Logical indicating whether to return the bearing (default
 \code{TRUE}).}
+
+\item{output}{Character string. \code{"points"} (default) returns point
+geometry outputs. \code{"value"} returns numeric metric values only,
+and \code{"polygon"} returns the input geometry with requested metric
+columns added.}
+
+\item{by_feature}{Logical. If \code{FALSE} (default), compute a single
+response from the convex hull of the whole input set. If \code{TRUE},
+compute one response per polygon feature.}
 }
 \value{
-A list containing:
+For \code{output = "points"}, a list containing:
 \item{south_point}{SpatVector of the southernmost point}
 \item{north_point}{SpatVector of the northernmost point}
 \item{distance}{Maximum distance in meters (if \code{distance = TRUE})}
 \item{bearing}{Geographic bearing from south to north in degrees (if
 \code{bearing = TRUE})}
+For \code{output = "value"}, returns a numeric scalar when one metric is
+requested, or a named numeric vector when both are requested.
+For \code{output = "polygon"}, returns the input geometry with the
+requested metric columns added.
+When \code{by_feature = TRUE}, returns per-feature outputs (list,
+numeric vector/data.frame, or polygon with columns, depending on
+\code{output}).
 }
 \description{
 Identifies the pair of most distant points on a polygon's convex hull and
@@ -42,4 +64,8 @@ library(terra)
 coords <- cbind(c(0, 0, 1, 1, 0), c(0, 1, 1, 0, 0))
 polygon <- vect(coords, type = "polygon", crs = "EPSG:4326")
 distant_pts <- get_distant_points(polygon)
+
+# Using a pre-computed convex hull
+hull_geom <- terra::hull(polygon, type = "convex")
+distant_pts_hull <- get_distant_points(hull_geom, isHull = TRUE)
 }

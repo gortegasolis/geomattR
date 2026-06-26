@@ -4,21 +4,34 @@
 #' calculates the geodesic distance and bearing from the southernmost to the
 #' northernmost point.
 #'
-#' @param v A SpatVector object representing a polygon.
-#' @param hull An optional pre-computed convex hull (SpatVector). If \code{NULL}
-#'   (default), the convex hull is computed internally. Passing a pre-computed
-#'   hull avoids redundant computation when calling from higher-level functions.
+#' @param v A SpatVector object representing a polygon, or a pre-computed convex hull if \code{isHull = TRUE}.
+#' @param isHull Logical. If \code{TRUE}, \code{v} is treated as a pre-computed convex hull.
+#'   If \code{FALSE} (default), the convex hull is computed internally.
 #' @param distance Logical indicating whether to return the maximum distance
 #'   (default \code{TRUE}).
 #' @param bearing Logical indicating whether to return the bearing (default
 #'   \code{TRUE}).
+#' @param output Character string. \code{"points"} (default) returns point
+#'   geometry outputs. \code{"value"} returns numeric metric values only,
+#'   and \code{"polygon"} returns the input geometry with requested metric
+#'   columns added.
+#' @param by_feature Logical. If \code{FALSE} (default), compute a single
+#'   response from the convex hull of the whole input set. If \code{TRUE},
+#'   compute one response per polygon feature.
 #'
-#' @return A list containing:
+#' @return For \code{output = "points"}, a list containing:
 #'   \item{south_point}{SpatVector of the southernmost point}
 #'   \item{north_point}{SpatVector of the northernmost point}
 #'   \item{distance}{Maximum distance in meters (if \code{distance = TRUE})}
 #'   \item{bearing}{Geographic bearing from south to north in degrees (if
 #'     \code{bearing = TRUE})}
+#' For \code{output = "value"}, returns a numeric scalar when one metric is
+#' requested, or a named numeric vector when both are requested.
+#' For \code{output = "polygon"}, returns the input geometry with the
+#' requested metric columns added.
+#' When \code{by_feature = TRUE}, returns per-feature outputs (list,
+#' numeric vector/data.frame, or polygon with columns, depending on
+#' \code{output}).
 #'
 #' @details
 #' The most distant hull-vertex pair is found with rotating calipers over the
@@ -32,18 +45,84 @@
 #' coords <- cbind(c(0, 0, 1, 1, 0), c(0, 1, 1, 0, 0))
 #' polygon <- vect(coords, type = "polygon", crs = "EPSG:4326")
 #' distant_pts <- get_distant_points(polygon)
-get_distant_points <- function(v, hull = NULL, distance = TRUE, bearing = TRUE) {
-  if (is.null(hull)) {
-    hull <- terra::hull(v, type = "convex")
+#' 
+#' # Using a pre-computed convex hull
+#' hull_geom <- terra::hull(polygon, type = "convex")
+#' distant_pts_hull <- get_distant_points(hull_geom, isHull = TRUE)
+get_distant_points <- function(v, isHull = FALSE, distance = TRUE, bearing = TRUE, output = "points", by_feature = FALSE) {
+  output <- match.arg(output, choices = c("points", "value", "polygon"))
+
+  if (!is.logical(by_feature) || length(by_feature) != 1L) {
+    stop("'by_feature' must be a single logical value.")
   }
-  coords <- normalize_hull_coords(terra::crds(hull))
+  if (!is.logical(distance) || length(distance) != 1L) {
+    stop("'distance' must be a single logical value.")
+  }
+  if (!is.logical(bearing) || length(bearing) != 1L) {
+    stop("'bearing' must be a single logical value.")
+  }
+  if (!distance && !bearing) {
+    stop("At least one of 'distance' or 'bearing' must be TRUE.")
+  }
+
+  if (by_feature) {
+    prep_all <- .prepare_metric_input(v = v, isHull = isHull, method = "geo")
+    n <- nrow(prep_all$v)
+    per_out <- lapply(seq_len(n), function(i) {
+      get_distant_points(
+        v = prep_all$v[i, ],
+        isHull = isHull,
+        distance = distance,
+        bearing = bearing,
+        output = output,
+        by_feature = FALSE
+      )
+    })
+
+    if (output == "points") {
+      return(per_out)
+    }
+
+    if (output == "value") {
+      if (distance && !bearing) {
+        return(as.numeric(unlist(per_out, use.names = FALSE)))
+      }
+      if (!distance && bearing) {
+        return(as.numeric(unlist(per_out, use.names = FALSE)))
+      }
+
+      out_df <- as.data.frame(do.call(rbind, per_out))
+      rownames(out_df) <- NULL
+      return(out_df)
+    }
+
+    out_v <- prep_all$v
+    if (distance) {
+      out_v$distance <- vapply(per_out, function(x) as.numeric(x$distance), numeric(1))
+    }
+    if (bearing) {
+      out_v$bearing <- vapply(per_out, function(x) as.numeric(x$bearing), numeric(1))
+    }
+    if (prep_all$isSf) {
+      if (!requireNamespace("sf", quietly = TRUE)) {
+        stop("Input is an 'sf' object but the 'sf' package is not installed.")
+      }
+      out_v <- sf::st_as_sf(out_v)
+    }
+    return(out_v)
+  }
+
+  prep <- .prepare_metric_input(v = v, isHull = isHull, method = "geo")
+  hull <- prep$hull
+  
+  coords <- .normalize_hull_coords(terra::crds(hull))
   n <- nrow(coords)
-  points_hull <- terra::vect(coords, crs = terra::crs(v))
+  points_hull <- terra::vect(coords, crs = terra::crs(hull))
 
   if (n == 1L) {
     subset_hull <- points_hull[c(1, 1), ]
   } else {
-    candidate_pairs <- find_antipodal_pairs(coords)
+    candidate_pairs <- .find_antipodal_pairs(coords)
 
     best_dist <- -Inf
     best_pair <- candidate_pairs[1, ]
@@ -101,91 +180,22 @@ get_distant_points <- function(v, hull = NULL, distance = TRUE, bearing = TRUE) 
     )
   }
 
-  return(result)
-}
-
-normalize_hull_coords <- function(coords) {
-  xy <- as.matrix(coords[, 1:2, drop = FALSE])
-  xy <- xy[stats::complete.cases(xy), , drop = FALSE]
-
-  if (nrow(xy) == 0L) {
-    stop("Hull has no valid coordinates")
+  if (output == "points") {
+    return(result)
   }
 
-  if (nrow(xy) > 1L) {
-    keep <- c(
-      TRUE,
-      rowSums(abs(xy[-1, , drop = FALSE] - xy[-nrow(xy), , drop = FALSE])) > 0
-    )
-    xy <- xy[keep, , drop = FALSE]
+  values <- c()
+  if (distance) {
+    values <- c(values, distance = as.numeric(result$distance))
+  }
+  if (bearing) {
+    values <- c(values, bearing = as.numeric(result$bearing))
   }
 
-  if (nrow(xy) > 1L && all(abs(xy[1, ] - xy[nrow(xy), ]) == 0)) {
-    xy <- xy[-nrow(xy), , drop = FALSE]
-  }
-
-  if (nrow(xy) >= 3L) {
-    x <- xy[, 1]
-    y <- xy[, 2]
-    x_next <- c(x[-1], x[1])
-    y_next <- c(y[-1], y[1])
-    signed_area2 <- sum(x * y_next - x_next * y)
-    if (signed_area2 < 0) {
-      xy <- xy[rev(seq_len(nrow(xy))), , drop = FALSE]
-    }
-  }
-
-  xy
-}
-
-find_antipodal_pairs <- function(coords, tol = 1e-12) {
-  n <- nrow(coords)
-  if (n <= 1L) {
-    return(matrix(c(1L, 1L), ncol = 2))
-  }
-  if (n == 2L) {
-    return(matrix(c(1L, 2L), ncol = 2))
-  }
-
-  idx <- function(k) ((k - 1L) %% n) + 1L
-  tri_area2 <- function(i, j, k) {
-    a <- coords[i, ]
-    b <- coords[j, ]
-    c <- coords[k, ]
-    abs((b[1] - a[1]) * (c[2] - a[2]) - (b[2] - a[2]) * (c[1] - a[1]))
-  }
-
-  j <- 2L
-  while (tri_area2(n, 1L, idx(j + 1L)) > tri_area2(n, 1L, j) + tol) {
-    j <- idx(j + 1L)
-  }
-
-  pairs <- matrix(numeric(0), ncol = 2)
-  for (i in seq_len(n)) {
-    i_next <- idx(i + 1L)
-    pairs <- rbind(pairs, c(i, j))
-
-    repeat {
-      j_next <- idx(j + 1L)
-      area_current <- tri_area2(i, i_next, j)
-      area_next <- tri_area2(i, i_next, j_next)
-
-      if (area_next > area_current + tol) {
-        j <- j_next
-        pairs <- rbind(pairs, c(i, j))
-      } else {
-        if (abs(area_next - area_current) <= tol) {
-          pairs <- rbind(pairs, c(i, j_next))
-        }
-        break
-      }
-    }
-  }
-
-  if (nrow(pairs) == 0L) {
-    return(matrix(c(1L, 2L), ncol = 2))
-  }
-
-  pairs <- t(apply(pairs, 1, function(p) sort(as.integer(p))))
-  unique(pairs)
+  .return_metric_output(
+    v = prep$v,
+    isSf = prep$isSf,
+    output = output,
+    values = values
+  )
 }

@@ -21,8 +21,6 @@ geographic (lon/lat) and projected CRS appropriately.
 \item \code{\link[=calculate_geometric_attributes]{calculate_geometric_attributes()}}: Calculate metrics for one or more
 polygons. Runs sequentially by default; pass a \code{cl} argument for parallel
 execution.
-\item \code{\link[=calculate_geometric_attributes_single]{calculate_geometric_attributes_single()}}: Core computation for a single
-polygon. Optimized to avoid redundant intermediate object creation.
 }
 }
 
@@ -30,8 +28,7 @@ polygon. Optimized to avoid redundant intermediate object creation.
 \itemize{
 \item \code{\link[=get_distant_points]{get_distant_points()}}: Find most distant points on convex hull
 \item \code{\link[=calc_elongation]{calc_elongation()}}: Calculate elongation ratio
-\item \code{\link[=calc_extent_ew]{calc_extent_ew()}}: Calculate east-west extent
-\item \code{\link[=calc_extent_ns]{calc_extent_ns()}}: Calculate north-south extent
+\item \code{\link[=calc_extent]{calc_extent()}}: Calculate east-west and north-south extents
 }
 }
 

@@ -4,19 +4,39 @@
 \alias{calc_elongation}
 \title{Calculate Elongation Ratio from Minimum Bounding Rectangle}
 \usage{
-calc_elongation(v, hull = NULL)
+calc_elongation(
+  v,
+  isHull = FALSE,
+  output = "value",
+  method = "geo",
+  by_feature = FALSE
+)
 }
 \arguments{
-\item{v}{A SpatVector object representing a polygon.}
+\item{v}{A SpatVector object representing a polygon, or a pre-computed convex hull if \code{isHull = TRUE}.}
 
-\item{hull}{An optional pre-computed convex hull (SpatVector). If \code{NULL}
-(default), the convex hull is computed internally. Passing a pre-computed
-hull avoids redundant computation.}
+\item{isHull}{Logical. If \code{TRUE}, \code{v} is treated as a pre-computed convex hull.
+If \code{FALSE} (default), the convex hull is computed internally.}
+
+\item{output}{Character string. Either \code{"value"} (default) to return
+the elongation ratio, or \code{"polygon"} to return the input geometry
+with \code{elongation_rectangle} added as an attribute.}
+
+\item{method}{Character string passed to \code{terra::distance()}.
+Defaults to \code{"geo"}.}
+
+\item{by_feature}{Logical. If \code{FALSE} (default), compute a single
+response from the convex hull of the whole input set. If \code{TRUE},
+compute one response per polygon feature.}
 }
 \value{
-A numeric value representing the elongation ratio of the input
-polygon from the minimum-bounding-rectangle approximation.
-Higher values indicate more elongated shapes.
+If \code{output = "value"}, a numeric value representing the
+elongation ratio of the input polygon from the current
+minimum-bounding-rectangle approximation. If
+\code{output = "polygon"}, the input geometry with
+\code{elongation_rectangle} added. When \code{by_feature = TRUE}, value
+output is returned as a numeric vector (one value per feature). Higher
+values indicate more elongated shapes.
 }
 \description{
 Calculates the elongation ratio of a polygon based on its minimum bounding
@@ -24,8 +44,8 @@ rectangle. The minimum bounding rectangle is computed from the convex hull of
 the input polygon. In the current implementation, elongation is computed as
 the ratio between:
 \itemize{
-\item the mean of the two largest pairwise corner-to-corner geodesic distances
-\item the mean of the two smallest pairwise corner-to-corner geodesic distances
+\item the mean length of the two largest sides
+\item the mean length of the two smallest sides
 }
 This approximation assumes the minimum bounding rectangle is unique,
 which may not always be the case. Consider this with caution.
@@ -35,4 +55,8 @@ library(terra)
 coords <- cbind(c(0, 0, 1, 1, 0), c(0, 1, 1, 0, 0))
 polygon <- vect(coords, type = "polygon", crs = "EPSG:4326")
 elongation <- calc_elongation(polygon)
+
+# Using a pre-computed convex hull
+hull_geom <- terra::hull(polygon, type = "convex")
+elongation_hull <- calc_elongation(hull_geom, isHull = TRUE)
 }

@@ -17,15 +17,12 @@
 #' - [calculate_geometric_attributes()]: Calculate metrics for one or more
 #'   polygons. Runs sequentially by default; pass a `cl` argument for parallel
 #'   execution.
-#' - [calculate_geometric_attributes_single()]: Core computation for a single
-#'   polygon. Optimized to avoid redundant intermediate object creation.
 #'
 #' ## Helper Functions
 #'
 #' - [get_distant_points()]: Find most distant points on convex hull
 #' - [calc_elongation()]: Calculate elongation ratio
-#' - [calc_extent_ew()]: Calculate east-west extent
-#' - [calc_extent_ns()]: Calculate north-south extent
+#' - [calc_extent()]: Calculate east-west and north-south extents
 #'
 #' ## Geodesic Measurements
 #'

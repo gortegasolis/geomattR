@@ -73,3 +73,61 @@ test_that("get_distant_points distance matches exhaustive hull search", {
 
   expect_equal(as.numeric(result$distance), as.numeric(ref), tolerance = 1e-6)
 })
+
+test_that("get_distant_points supports by_feature output", {
+  p1 <- terra::vect(cbind(c(0, 0, 1, 1, 0), c(0, 1, 1, 0, 0)), type = "polygon", crs = "EPSG:4326")
+  p2 <- terra::vect(cbind(c(2, 2, 5, 5, 2), c(0, 1, 1, 0, 0)), type = "polygon", crs = "EPSG:4326")
+  pol <- rbind(p1, p2)
+
+  result <- get_distant_points(pol, by_feature = TRUE)
+
+  expect_true(is.list(result))
+  expect_equal(length(result), 2)
+  expect_true(all(vapply(result, function(x) is.list(x), logical(1))))
+  expect_true(all(vapply(result, function(x) methods::is(x$south_point, "SpatVector"), logical(1))))
+  expect_true(all(vapply(result, function(x) methods::is(x$north_point, "SpatVector"), logical(1))))
+})
+
+test_that("get_distant_points supports value output modes", {
+  coords <- cbind(c(0, 0, 2, 2, 0), c(0, 2, 2, 0, 0))
+  pol <- terra::vect(coords, type = "polygon", crs = "EPSG:4326")
+
+  out_distance <- get_distant_points(pol, distance = TRUE, bearing = FALSE, output = "value")
+  out_bearing <- get_distant_points(pol, distance = FALSE, bearing = TRUE, output = "value")
+  out_both <- get_distant_points(pol, distance = TRUE, bearing = TRUE, output = "value")
+
+  expect_type(out_distance, "double")
+  expect_type(out_bearing, "double")
+  expect_true(out_distance > 0)
+  expect_true(!is.na(out_bearing))
+  expect_type(out_both, "double")
+  expect_true(all(c("distance", "bearing") %in% names(out_both)))
+})
+
+test_that("get_distant_points supports polygon output mode", {
+  coords <- cbind(c(0, 0, 2, 2, 0), c(0, 2, 2, 0, 0))
+  pol <- terra::vect(coords, type = "polygon", crs = "EPSG:4326")
+
+  out <- get_distant_points(pol, distance = TRUE, bearing = TRUE, output = "polygon")
+
+  expect_true(methods::is(out, "SpatVector"))
+  expect_true("distance" %in% names(out))
+  expect_true("bearing" %in% names(out))
+  expect_true(out$distance > 0)
+  expect_true(!is.na(out$bearing))
+})
+
+test_that("get_distant_points supports by_feature value output", {
+  p1 <- terra::vect(cbind(c(0, 0, 1, 1, 0), c(0, 1, 1, 0, 0)), type = "polygon", crs = "EPSG:4326")
+  p2 <- terra::vect(cbind(c(2, 2, 5, 5, 2), c(0, 1, 1, 0, 0)), type = "polygon", crs = "EPSG:4326")
+  pol <- rbind(p1, p2)
+
+  out_one <- get_distant_points(pol, distance = TRUE, bearing = FALSE, output = "value", by_feature = TRUE)
+  out_both <- get_distant_points(pol, distance = TRUE, bearing = TRUE, output = "value", by_feature = TRUE)
+
+  expect_type(out_one, "double")
+  expect_equal(length(out_one), 2)
+  expect_true(is.data.frame(out_both))
+  expect_equal(nrow(out_both), 2)
+  expect_true(all(c("distance", "bearing") %in% names(out_both)))
+})

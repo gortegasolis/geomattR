@@ -1,10 +1,10 @@
-test_that("calculate_geometric_attributes_single works with all metrics", {
+test_that(".calculate_geometric_attributes_single works with all metrics", {
   # Create test polygon
   coords <- cbind(c(0, 0, 1, 1, 0), c(0, 1, 1, 0, 0))
   pol <- terra::vect(coords, type = "polygon", crs = "EPSG:4326")
 
   # Test with all metrics
-  result <- calculate_geometric_attributes_single(pol, metrics = "all")
+  result <- .calculate_geometric_attributes_single(pol, metrics = "all")
 
   # Check that result is a SpatVector
   expect_true(methods::is(result, "SpatVector"))
@@ -22,12 +22,12 @@ test_that("calculate_geometric_attributes_single works with all metrics", {
   }
 })
 
-test_that("calculate_geometric_attributes_single works with subset of metrics", {
+test_that(".calculate_geometric_attributes_single works with subset of metrics", {
   coords <- cbind(c(0, 0, 1, 1, 0), c(0, 1, 1, 0, 0))
   pol <- terra::vect(coords, type = "polygon", crs = "EPSG:4326")
 
   # Test with specific metrics
-  result <- calculate_geometric_attributes_single(
+  result <- .calculate_geometric_attributes_single(
     pol,
     metrics = c("area", "perimeter", "compactness")
   )
@@ -41,29 +41,29 @@ test_that("calculate_geometric_attributes_single works with subset of metrics", 
   expect_false("bearing" %in% names(result))
 })
 
-test_that("calculate_geometric_attributes_single validates input", {
+test_that(".calculate_geometric_attributes_single validates input", {
   coords <- cbind(c(0, 0, 1, 1, 0), c(0, 1, 1, 0, 0))
   pol <- terra::vect(coords, type = "polygon", crs = "EPSG:4326")
 
   # Test invalid input type
-  expect_error(calculate_geometric_attributes_single("not a SpatVector"))
+  expect_error(.calculate_geometric_attributes_single("not a SpatVector"))
 
   # Test multiple features (should error)
   multi_pol <- rbind(pol, pol)
-  expect_error(calculate_geometric_attributes_single(multi_pol))
+  expect_error(.calculate_geometric_attributes_single(multi_pol))
 
   # Test invalid metric name
   expect_error(
-    calculate_geometric_attributes_single(pol, metrics = "invalid_metric")
+    .calculate_geometric_attributes_single(pol, metrics = "invalid_metric")
   )
 })
 
-test_that("calculate_geometric_attributes_single computes correct area", {
+test_that(".calculate_geometric_attributes_single computes correct area", {
   # Create a simple square (1x1 degree at equator ~111km per degree)
   coords <- cbind(c(0, 0, 1, 1, 0), c(0, 1, 1, 0, 0))
   pol <- terra::vect(coords, type = "polygon", crs = "EPSG:4326")
 
-  result <- calculate_geometric_attributes_single(pol, metrics = "area")
+  result <- .calculate_geometric_attributes_single(pol, metrics = "area")
 
   # Area should be positive
   expect_true(result$area > 0)
@@ -74,21 +74,21 @@ test_that("calculate_geometric_attributes_single computes correct area", {
   expect_true(result$area < 2e10)
 })
 
-test_that("calculate_geometric_attributes_single computes positive perimeter", {
+test_that(".calculate_geometric_attributes_single computes positive perimeter", {
   coords <- cbind(c(0, 0, 1, 1, 0), c(0, 1, 1, 0, 0))
   pol <- terra::vect(coords, type = "polygon", crs = "EPSG:4326")
 
-  result <- calculate_geometric_attributes_single(pol, metrics = "perimeter")
+  result <- .calculate_geometric_attributes_single(pol, metrics = "perimeter")
 
   # Perimeter should be positive
   expect_true(result$perimeter > 0)
 })
 
-test_that("calculate_geometric_attributes_single computes valid compactness", {
+test_that(".calculate_geometric_attributes_single computes valid compactness", {
   coords <- cbind(c(0, 0, 1, 1, 0), c(0, 1, 1, 0, 0))
   pol <- terra::vect(coords, type = "polygon", crs = "EPSG:4326")
 
-  result <- calculate_geometric_attributes_single(
+  result <- .calculate_geometric_attributes_single(
     pol,
     metrics = c("area", "perimeter", "compactness")
   )
@@ -98,14 +98,14 @@ test_that("calculate_geometric_attributes_single computes valid compactness", {
   expect_true(result$compactness <= 1)
 })
 
-test_that("calculate_geometric_attributes_single handles holes correctly", {
+test_that(".calculate_geometric_attributes_single handles holes correctly", {
   # Build a single polygon feature with one interior ring.
   pol <- terra::vect(
     "POLYGON ((0 0, 0 4, 4 4, 4 0, 0 0), (1 1, 1 3, 3 3, 3 1, 1 1))",
     crs = "EPSG:4326"
   )
 
-  result <- calculate_geometric_attributes_single(
+  result <- .calculate_geometric_attributes_single(
     pol,
     metrics = c("num_holes", "hole_area", "hole_area_pct")
   )
@@ -117,22 +117,22 @@ test_that("calculate_geometric_attributes_single handles holes correctly", {
   expect_true(result$hole_area_pct < 100)
 })
 
-test_that("calculate_geometric_attributes_single computes valid bearing", {
+test_that(".calculate_geometric_attributes_single computes valid bearing", {
   coords <- cbind(c(0, 0, 1, 1, 0), c(0, 1, 1, 0, 0))
   pol <- terra::vect(coords, type = "polygon", crs = "EPSG:4326")
 
-  result <- calculate_geometric_attributes_single(pol, metrics = "bearing")
+  result <- .calculate_geometric_attributes_single(pol, metrics = "bearing")
 
   # Bearing should be between 0 and 360 degrees (or handle negative values)
   expect_true(!is.na(result$bearing))
   expect_true(result$bearing >= -180 & result$bearing <= 360)
 })
 
-test_that("calculate_geometric_attributes_single computes valid northerness", {
+test_that(".calculate_geometric_attributes_single computes valid northerness", {
   coords <- cbind(c(0, 0, 1, 1, 0), c(0, 1, 1, 0, 0))
   pol <- terra::vect(coords, type = "polygon", crs = "EPSG:4326")
 
-  result <- calculate_geometric_attributes_single(
+  result <- .calculate_geometric_attributes_single(
     pol,
     metrics = c("bearing", "northerness")
   )
@@ -142,11 +142,11 @@ test_that("calculate_geometric_attributes_single computes valid northerness", {
   expect_true(result$northerness <= 1)
 })
 
-test_that("calculate_geometric_attributes_single computes valid centroid", {
+test_that(".calculate_geometric_attributes_single computes valid centroid", {
   coords <- cbind(c(0, 0, 1, 1, 0), c(0, 1, 1, 0, 0))
   pol <- terra::vect(coords, type = "polygon", crs = "EPSG:4326")
 
-  result <- calculate_geometric_attributes_single(
+  result <- .calculate_geometric_attributes_single(
     pol,
     metrics = c("decimallongitude", "decimallatitude")
   )

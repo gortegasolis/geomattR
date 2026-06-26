@@ -58,8 +58,8 @@ spatial polygon features. Supports both sequential and parallel execution
 through an optional cluster argument.
 }
 \details{
-Each polygon is processed independently via
-\code{\link{calculate_geometric_attributes_single}}, which ensures that
+Each polygon is processed independently via the internal function
+\code{.calculate_geometric_attributes_single}, which ensures that
 intermediate objects (convex hull, minimum circle, etc.) are computed only
 once per feature.
 

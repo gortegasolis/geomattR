@@ -48,8 +48,8 @@
 #'   }
 #'
 #' @details
-#' Each polygon is processed independently via
-#' \code{\link{calculate_geometric_attributes_single}}, which ensures that
+#' Each polygon is processed independently via the internal function
+#' \code{.calculate_geometric_attributes_single}, which ensures that
 #' intermediate objects (convex hull, minimum circle, etc.) are computed only
 #' once per feature.
 #'
@@ -121,7 +121,7 @@ calculate_geometric_attributes <- function(v, metrics = "all", cl = NULL) {
 
   # Single feature: process directly (no overhead from split/combine)
   if (n_features == 1L) {
-    return(calculate_geometric_attributes_single(v, metrics = metrics))
+    return(.calculate_geometric_attributes_single(v, metrics = metrics))
   }
 
   # Split the SpatVector into individual features
@@ -130,7 +130,7 @@ calculate_geometric_attributes <- function(v, metrics = "all", cl = NULL) {
   if (is.null(cl)) {
     # --- Sequential processing ---
     results <- lapply(feature_list, function(poly) {
-      calculate_geometric_attributes_single(poly, metrics = metrics)
+      .calculate_geometric_attributes_single(poly, metrics = metrics)
     })
   } else {
     # --- Parallel processing ---
@@ -142,17 +142,16 @@ calculate_geometric_attributes <- function(v, metrics = "all", cl = NULL) {
     parallel::clusterExport(
       cl,
       c(
-        "calculate_geometric_attributes_single",
+        ".calculate_geometric_attributes_single",
         "calc_elongation",
-        "calc_extent_ew",
-        "calc_extent_ns",
+        "calc_extent",
         "get_distant_points"
       ),
       envir = asNamespace("geomattR")
     )
 
     results <- parallel::parLapply(cl, feature_list, function(poly) {
-      calculate_geometric_attributes_single(poly, metrics = metrics)
+      .calculate_geometric_attributes_single(poly, metrics = metrics)
     })
   }
 
