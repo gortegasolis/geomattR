@@ -25,6 +25,7 @@ Imports:
     methods
 Suggests: 
     testthat (>= 3.2.3),
+    sf,
     knitr (>= 1.50),
     rmarkdown (>= 2.30)
 Config/testthat/edition: 3
