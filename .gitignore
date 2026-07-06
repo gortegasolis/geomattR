@@ -23,3 +23,5 @@ geomattR-manual.pdf
 
 # Local developer build and check scripts
 build_check.sh
+CRAN_checklist.md
+plan.md
