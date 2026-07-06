@@ -5,3 +5,8 @@
 ^LICENSE\.md$
 ^build_check\.sh$
 ^\.quarto$
+^CRAN_checklist\.md$
+^plan\.md$
+^geomattR\.Rcheck$
+^geomattR_.*\.tar\.gz$
+^geomattR-manual\.pdf$
