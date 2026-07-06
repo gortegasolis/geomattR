@@ -2,14 +2,18 @@
 #'
 #' Calculates the elongation ratio of a polygon based on its minimum bounding
 #' rectangle. The minimum bounding rectangle is computed from the convex hull of
-#' the input polygon. In the current implementation, elongation is computed as
-#' the ratio between:
-#' \itemize{
-#'   \item the mean length of the two largest sides
-#'   \item the mean length of the two smallest sides
-#' }
-#' This approximation assumes the minimum bounding rectangle is unique, 
+#' the input polygon.
+#'
+#' @details
+#' In the current implementation, elongation is computed as the ratio of the mean 
+#' of the two largest side lengths to the mean of the two shortest side lengths:
+#' \eqn{E = \frac{\text{mean}(\text{long sides})}{\text{mean}(\text{short sides})}}
+#'
+#' This approximation assumes the minimum bounding rectangle is unique,
 #' which may not always be the case. Consider this with caution.
+#'
+#' @references
+#' Dražić, Slobodan, Nebojša Ralević, and Joviša Žunić. ‘Shape Elongation from Optimal Encasing Rectangles’. Computers & Mathematics with Applications 60, no. 7 (2010): 2035–42. https://doi.org/10.1016/j.camwa.2010.07.043.
 #'
 #' @param v A SpatVector object representing a polygon, or a pre-computed convex hull if \code{isHull = TRUE}.
 #' @param isHull Logical. If \code{TRUE}, \code{v} is treated as a pre-computed convex hull.
@@ -18,7 +22,9 @@
 #'   the elongation ratio, or \code{"polygon"} to return the input geometry
 #'   with \code{elongation_rectangle} added as an attribute.
 #' @param method Character string passed to \code{terra::distance()}.
-#'   Defaults to \code{"geo"}.
+#'   Defaults to \code{"geo"} (recommended). Other supported options are
+#'   \code{"haversine"} and \code{"cosine"}. See \code{\link[terra]{distance}}
+#'   for more information.
 #' @param by_feature Logical. If \code{FALSE} (default), compute a single
 #'   response from the convex hull of the whole input set. If \code{TRUE},
 #'   compute one response per polygon feature.
@@ -38,13 +44,20 @@
 #' coords <- cbind(c(0, 0, 1, 1, 0), c(0, 1, 1, 0, 0))
 #' polygon <- vect(coords, type = "polygon", crs = "EPSG:4326")
 #' elongation <- calc_elongation(polygon)
-#' 
+#'
 #' # Using a pre-computed convex hull
 #' hull_geom <- terra::hull(polygon, type = "convex")
 #' elongation_hull <- calc_elongation(hull_geom, isHull = TRUE)
 calc_elongation <- function(v, isHull = FALSE, output = "value", method = "geo", by_feature = FALSE) {
+
+  if (!is.character(output) || length(output) != 1L) {
+    cli::cli_abort("{.arg output} must be a single character value.", call = rlang::caller_env())
+  }
+
+  output <- match.arg(output, choices = c("value", "polygon"))
+
   if (!is.logical(by_feature) || length(by_feature) != 1L) {
-    stop("'by_feature' must be a single logical value.")
+    cli::cli_abort("{.arg by_feature} must be a single logical value.", call = rlang::caller_env())
   }
 
   if (by_feature) {
@@ -68,7 +81,7 @@ calc_elongation <- function(v, isHull = FALSE, output = "value", method = "geo",
     out_v$elongation_rectangle <- per_values
     if (prep_all$isSf) {
       if (!requireNamespace("sf", quietly = TRUE)) {
-        stop("Input is an 'sf' object but the 'sf' package is not installed.")
+        cli::cli_abort("Input is an {.pkg sf} object but the {.pkg sf} package is not installed.", call = rlang::caller_env())
       }
       out_v <- sf::st_as_sf(out_v)
     }
@@ -84,9 +97,9 @@ calc_elongation <- function(v, isHull = FALSE, output = "value", method = "geo",
 
   dists_rect <- terra::distance(dims_rect, method = method)
   dists_rect <- sort(dists_rect, decreasing = TRUE)
-  major <- mean(dists_rect[1:2])
+  major <- mean(dists_rect[4:5])
   dists_rect <- sort(dists_rect, decreasing = FALSE)
-  minor <- mean(dists_rect[1:2])
+  minor <- mean(dists_rect[2:3])
 
   value <- c(elongation_rectangle = major / minor)
 

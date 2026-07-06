@@ -1,8 +1,26 @@
 #' Find largest distance between a pair of opposite vertices
 #'
 #' Identifies the pair of most distant points on a polygon's convex hull and
-#' calculates the geodesic distance and bearing from the southernmost to the
-#' northernmost point.
+#' calculates their distance (using the selected \code{method}) and the bearing
+#' from the southernmost to the northernmost point.
+#'
+#' @details
+#' The most distant hull-vertex pair is found using the rotating calipers algorithm
+#' over the convex hull (linear complexity in the number of hull vertices). Distances
+#' are evaluated for candidate antipodal pairs using \code{terra::distance()} with
+#' the selected \code{method}.
+#'
+#' \strong{Tie-breaking & Point Ordering:}
+#' If multiple antipodal pairs share the maximum distance, ties are broken by selecting the
+#' pair containing the southernmost (and then westernmost) coordinate. The points are ordered
+#' in the output such that:
+#' \itemize{
+#'   \item \code{south_point} (point 1): the southernmost (and westernmost, in case of a tie) point of the pair.
+#'   \item \code{north_point} (point 2): the northernmost (and easternmost) point of the pair.
+#' }
+#' The geographic bearing is calculated from \code{south_point} to \code{north_point}
+#' using \code{geosphere::bearing()}. When needed, the geometry is internally
+#' transformed to geographic coordinates for bearing calculation.
 #'
 #' @param v A SpatVector object representing a polygon, or a pre-computed convex hull if \code{isHull = TRUE}.
 #' @param isHull Logical. If \code{TRUE}, \code{v} is treated as a pre-computed convex hull.
@@ -15,6 +33,10 @@
 #'   geometry outputs. \code{"value"} returns numeric metric values only,
 #'   and \code{"polygon"} returns the input geometry with requested metric
 #'   columns added.
+#' @param method Character string passed to \code{terra::distance()}.
+#'   Defaults to \code{"geo"} (recommended). Other supported options are
+#'   \code{"haversine"} and \code{"cosine"}. Bearing is computed from
+#'   geographic coordinates when needed.
 #' @param by_feature Logical. If \code{FALSE} (default), compute a single
 #'   response from the convex hull of the whole input set. If \code{TRUE},
 #'   compute one response per polygon feature.
@@ -33,11 +55,6 @@
 #' numeric vector/data.frame, or polygon with columns, depending on
 #' \code{output}).
 #'
-#' @details
-#' The most distant hull-vertex pair is found with rotating calipers over the
-#' convex hull (linear in the number of hull vertices), then geodesic distances
-#' are evaluated only for candidate antipodal pairs.
-#'
 #' @export
 #'
 #' @examples
@@ -45,28 +62,30 @@
 #' coords <- cbind(c(0, 0, 1, 1, 0), c(0, 1, 1, 0, 0))
 #' polygon <- vect(coords, type = "polygon", crs = "EPSG:4326")
 #' distant_pts <- get_distant_points(polygon)
-#' 
+#'
 #' # Using a pre-computed convex hull
 #' hull_geom <- terra::hull(polygon, type = "convex")
 #' distant_pts_hull <- get_distant_points(hull_geom, isHull = TRUE)
-get_distant_points <- function(v, isHull = FALSE, distance = TRUE, bearing = TRUE, output = "points", by_feature = FALSE) {
+get_distant_points <- function(v, isHull = FALSE, distance = TRUE, bearing = TRUE, output = "points", by_feature = FALSE, method = "geo") {
   output <- match.arg(output, choices = c("points", "value", "polygon"))
 
   if (!is.logical(by_feature) || length(by_feature) != 1L) {
-    stop("'by_feature' must be a single logical value.")
+    cli::cli_abort("{.arg by_feature} must be a single logical value.", call = rlang::caller_env())
   }
   if (!is.logical(distance) || length(distance) != 1L) {
-    stop("'distance' must be a single logical value.")
+    cli::cli_abort("{.arg distance} must be a single logical value.", call = rlang::caller_env())
   }
   if (!is.logical(bearing) || length(bearing) != 1L) {
-    stop("'bearing' must be a single logical value.")
+    cli::cli_abort("{.arg bearing} must be a single logical value.", call = rlang::caller_env())
   }
   if (!distance && !bearing) {
-    stop("At least one of 'distance' or 'bearing' must be TRUE.")
+    cli::cli_abort("At least one of {.arg distance} or {.arg bearing} must be TRUE.", call = rlang::caller_env())
   }
 
+  prep_method <- if (bearing) "geo" else method
+
   if (by_feature) {
-    prep_all <- .prepare_metric_input(v = v, isHull = isHull, method = "geo")
+    prep_all <- .prepare_metric_input(v = v, isHull = isHull, method = prep_method)
     n <- nrow(prep_all$v)
     per_out <- lapply(seq_len(n), function(i) {
       get_distant_points(
@@ -75,7 +94,8 @@ get_distant_points <- function(v, isHull = FALSE, distance = TRUE, bearing = TRU
         distance = distance,
         bearing = bearing,
         output = output,
-        by_feature = FALSE
+        by_feature = FALSE,
+        method = method
       )
     })
 
@@ -105,16 +125,16 @@ get_distant_points <- function(v, isHull = FALSE, distance = TRUE, bearing = TRU
     }
     if (prep_all$isSf) {
       if (!requireNamespace("sf", quietly = TRUE)) {
-        stop("Input is an 'sf' object but the 'sf' package is not installed.")
+        cli::cli_abort("Input is an {.pkg sf} object but the {.pkg sf} package is not installed.", call = rlang::caller_env())
       }
       out_v <- sf::st_as_sf(out_v)
     }
     return(out_v)
   }
 
-  prep <- .prepare_metric_input(v = v, isHull = isHull, method = "geo")
+  prep <- .prepare_metric_input(v = v, isHull = isHull, method = prep_method)
   hull <- prep$hull
-  
+
   coords <- .normalize_hull_coords(terra::crds(hull))
   n <- nrow(coords)
   points_hull <- terra::vect(coords, crs = terra::crs(hull))
@@ -132,7 +152,7 @@ get_distant_points <- function(v, isHull = FALSE, distance = TRUE, bearing = TRU
       pair <- candidate_pairs[i, ]
       p1 <- points_hull[pair[1], ]
       p2 <- points_hull[pair[2], ]
-      d <- terra::distance(p1, p2, method = "geo")
+      d <- terra::distance(p1, p2, method = method)
 
       pair_coords <- coords[pair, , drop = FALSE]
       order_idx <- order(pair_coords[, 2], pair_coords[, 1])
@@ -170,7 +190,7 @@ get_distant_points <- function(v, isHull = FALSE, distance = TRUE, bearing = TRU
   )
 
   if (distance) {
-    result$distance <- terra::distance(south_point, north_point, method = "geo")
+    result$distance <- terra::distance(south_point, north_point, method = method)
   }
 
   if (bearing) {

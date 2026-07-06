@@ -10,7 +10,8 @@ get_distant_points(
   distance = TRUE,
   bearing = TRUE,
   output = "points",
-  by_feature = FALSE
+  by_feature = FALSE,
+  method = "geo"
 )
 }
 \arguments{
@@ -33,6 +34,11 @@ columns added.}
 \item{by_feature}{Logical. If \code{FALSE} (default), compute a single
 response from the convex hull of the whole input set. If \code{TRUE},
 compute one response per polygon feature.}
+
+\item{method}{Character string passed to \code{terra::distance()}.
+Defaults to \code{"geo"} (recommended). Other supported options are
+\code{"haversine"} and \code{"cosine"}. Bearing is computed from
+geographic coordinates when needed.}
 }
 \value{
 For \code{output = "points"}, a list containing:
@@ -51,13 +57,26 @@ numeric vector/data.frame, or polygon with columns, depending on
 }
 \description{
 Identifies the pair of most distant points on a polygon's convex hull and
-calculates the geodesic distance and bearing from the southernmost to the
-northernmost point.
+calculates their distance (using the selected \code{method}) and the bearing
+from the southernmost to the northernmost point.
 }
 \details{
-The most distant hull-vertex pair is found with rotating calipers over the
-convex hull (linear in the number of hull vertices), then geodesic distances
-are evaluated only for candidate antipodal pairs.
+The most distant hull-vertex pair is found using the rotating calipers algorithm
+over the convex hull (linear complexity in the number of hull vertices). Distances
+are evaluated for candidate antipodal pairs using \code{terra::distance()} with
+the selected \code{method}.
+
+\strong{Tie-breaking & Point Ordering:}
+If multiple antipodal pairs share the maximum distance, ties are broken by selecting the
+pair containing the southernmost (and then westernmost) coordinate. The points are ordered
+in the output such that:
+\itemize{
+\item \code{south_point} (point 1): the southernmost (and westernmost, in case of a tie) point of the pair.
+\item \code{north_point} (point 2): the northernmost (and easternmost) point of the pair.
+}
+The geographic bearing is calculated from \code{south_point} to \code{north_point}
+using \code{geosphere::bearing()}. When needed, the geometry is internally
+transformed to geographic coordinates for bearing calculation.
 }
 \examples{
 library(terra)

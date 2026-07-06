@@ -1,36 +1,20 @@
 #' Calculate Polygon Extent
 #'
 #' Calculates east-west and/or north-south extent of a polygon based on its
-#' geographic bounding box.
-#'
-#' @param v A SpatVector object representing a polygon, or a pre-computed convex
-#'   hull if \code{isHull = TRUE}.
-#' @param isHull Logical. If \code{TRUE}, \code{v} is treated as a pre-computed
-#'   convex hull. If \code{FALSE} (default), the convex hull is computed
-#'   internally.
-#' @param direction Character vector indicating which extent(s) to return when
-#'   \code{output = "value"} or \code{output = "polygon"}. Valid values are
-#'   \code{"ew"} and \code{"ns"}. Default is both.
-#' @param output Character string. Either \code{"value"} (default) to return
-#'   extent values, or \code{"polygon"} to return the input geometry with the
-#'   requested extent columns added.
-#' @param method Character string passed to \code{terra::distance()}.
-#'   Defaults to \code{"geo"}.
-#' @param by_feature Logical. If \code{FALSE} (default), compute a single
-#'   response from the convex hull of the whole input set. If \code{TRUE},
-#'   compute one response per polygon feature.
-#'
-#' @return If \code{output = "value"} and one direction is requested, returns a
-#'   numeric scalar. If both directions are requested, returns a named numeric
-#'   vector with \code{ew_length} and \code{ns_length}. If
-#'   \code{output = "polygon"}, returns the input geometry with the requested
-#'   extent columns added. When \code{by_feature = TRUE}, value output is
-#'   returned per feature (numeric vector for one direction, data.frame for both
-#'   directions).
+#' geographic bounding box corners.
 #'
 #' @details
-#' Extent is computed from the convex hull bounding box corners using
+#' Extent is computed from the bounding box of the polygon's convex hull. The Southwest (SW),
+#' Southeast (SE), Northwest (NW), and Northeast (NE) corners of this box are evaluated using
 #' \code{terra::distance()} with the selected \code{method}.
+#'
+#' The metric values are calculated as:
+#' \itemize{
+#'   \item \strong{East-West Extent}: The average length of the top and bottom bounding box edges:
+#'     \deqn{\text{EW} = \frac{d(SW, SE) + d(NW, NE)}{2}}
+#'   \item \strong{North-South Extent}: The average length of the left and right bounding box edges:
+#'     \deqn{\text{NS} = \frac{d(SW, NW) + d(SE, NE)}{2}}
+#' }
 #' When \code{method} is \code{"geo"} or \code{"haversine"}, the hull is
 #' projected to EPSG:4326 when needed before distance calculations.
 #'
@@ -44,6 +28,36 @@
 #'
 #' For \code{output = "polygon"}, only the requested extent columns are added
 #' as attributes.
+#'
+#' For interpretation and relation to other shape metrics, see
+#' \code{\link{calculate_geometric_attributes}}.
+#'
+#' @param v A SpatVector object representing a polygon, or a pre-computed convex
+#'   hull if \code{isHull = TRUE}.
+#' @param isHull Logical. If \code{TRUE}, \code{v} is treated as a pre-computed
+#'   convex hull. If \code{FALSE} (default), the convex hull is computed
+#'   internally.
+#' @param direction Character vector indicating which extent(s) to return when
+#'   \code{output = "value"} or \code{output = "polygon"}. Valid values are
+#'   \code{"ew"} and \code{"ns"}. Default is both.
+#' @param output Character string. Either \code{"value"} (default) to return
+#'   extent values, or \code{"polygon"} to return the input geometry with the
+#'   requested extent columns added.
+#' @param method Character string passed to \code{terra::distance()}.
+#'   Defaults to \code{"geo"} (recommended). Other supported options are
+#'   \code{"haversine"} and \code{"cosine"}. See \code{\link[terra]{distance}}
+#'   for more information.
+#' @param by_feature Logical. If \code{FALSE} (default), compute a single
+#'   response from the convex hull of the whole input set. If \code{TRUE},
+#'   compute one response per polygon feature.
+#'
+#' @return If \code{output = "value"} and one direction is requested, returns a
+#'   numeric scalar. If both directions are requested, returns a named numeric
+#'   vector with \code{ew_length} and \code{ns_length}. If
+#'   \code{output = "polygon"}, returns the input geometry with the requested
+#'   extent columns added. When \code{by_feature = TRUE}, value output is
+#'   returned per feature (numeric vector for one direction, data.frame for both
+#'   directions).
 #'
 #' @export
 #'
@@ -69,13 +83,13 @@
 calc_extent <- function(v, isHull = FALSE, direction = c("ew", "ns"), output = "value", method = "geo", by_feature = FALSE) {
   direction <- unique(direction)
   if (!is.character(direction) || length(direction) < 1L) {
-    stop("'direction' must be a character vector with 'ew' and/or 'ns'.")
+    cli::cli_abort("{.arg direction} must be a character vector with 'ew' and/or 'ns'.", call = rlang::caller_env())
   }
   if (!all(direction %in% c("ew", "ns"))) {
-    stop("Invalid direction. Use 'ew', 'ns', or c('ew', 'ns').")
+    cli::cli_abort("Invalid {.arg direction}. Use 'ew', 'ns', or c('ew', 'ns').", call = rlang::caller_env())
   }
   if (!is.logical(by_feature) || length(by_feature) != 1L) {
-    stop("'by_feature' must be a single logical value.")
+    cli::cli_abort("{.arg by_feature} must be a single logical value.", call = rlang::caller_env())
   }
 
   if (by_feature) {
@@ -112,7 +126,7 @@ calc_extent <- function(v, isHull = FALSE, direction = c("ew", "ns"), output = "
 
     if (prep_all$isSf) {
       if (!requireNamespace("sf", quietly = TRUE)) {
-        stop("Input is an 'sf' object but the 'sf' package is not installed.")
+        cli::cli_abort("Input is an {.pkg sf} object but the {.pkg sf} package is not installed.", call = rlang::caller_env())
       }
       out_v <- sf::st_as_sf(out_v)
     }

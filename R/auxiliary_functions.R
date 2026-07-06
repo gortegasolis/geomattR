@@ -5,7 +5,10 @@
   }
 
   if (!methods::is(v, "SpatVector")) {
-    stop("'v' must be a SpatVector object")
+    cli::cli_abort(
+      "{.arg v} must be a SpatVector object",
+      call = rlang::caller_env()
+    )
   }
 
   hull <- if (isHull) v else terra::hull(v, type = "convex")
@@ -18,7 +21,10 @@
 
 .return_metric_output <- function(v, isSf, output = "value", values) {
   if (length(output) != 1L) {
-    stop("Output type must be a single value: either 'value' or 'polygon'.")
+    cli::cli_abort(
+      "Output type must be a single value: either 'value' or 'polygon'.",
+      call = rlang::caller_env()
+    )
   }
   output <- match.arg(output, choices = c("value", "polygon"))
 
@@ -31,7 +37,10 @@
 
   value_names <- names(values)
   if (is.null(value_names) || any(value_names == "")) {
-    stop("'values' must be a named vector when output = 'polygon'.")
+    cli::cli_abort(
+      "{.arg values} must be a named vector when {.code output = 'polygon'}.",
+      call = rlang::caller_env()
+    )
   }
 
   for (name in value_names) {
@@ -40,7 +49,10 @@
 
   if (isSf) {
     if (!requireNamespace("sf", quietly = TRUE)) {
-      stop("Input is an 'sf' object but the 'sf' package is not installed.")
+      cli::cli_abort(
+        "Input is an {.pkg sf} object but the {.pkg sf} package is not installed.",
+        call = rlang::caller_env()
+      )
     }
     v <- sf::st_as_sf(v)
   }
@@ -53,7 +65,7 @@
   xy <- xy[stats::complete.cases(xy), , drop = FALSE]
 
   if (nrow(xy) == 0L) {
-    stop("Hull has no valid coordinates")
+    cli::cli_abort("Hull has no valid coordinates.", call = rlang::caller_env())
   }
 
   if (nrow(xy) > 1L) {
@@ -134,7 +146,11 @@
   unique(pairs)
 }
 
-.calc_extent_values <- function(hull, direction = c("ew", "ns"), method = "geo") {
+.calc_extent_values <- function(
+  hull,
+  direction = c("ew", "ns"),
+  method = "geo"
+) {
   b <- terra::ext(hull)
   crs_hull <- terra::crs(hull)
   pt_sw <- terra::vect(cbind(b$xmin, b$ymin), crs = crs_hull)
@@ -163,36 +179,56 @@
   values
 }
 
-.calculate_geometric_attributes_single <- function(v, metrics = "all") {
-  # Validate input
-  if (!methods::is(v, "SpatVector")) {
-    stop("'v' must be a SpatVector object")
-  }
-
+.calculate_geometric_attributes_single <- function(
+  v,
+  metrics = "all",
+  method = "geo"
+) {
   if (nrow(v) != 1) {
-    stop(
-      "Input must contain exactly one polygon. Received ",
-      nrow(v),
-      " features."
+    cli::cli_abort(
+      "Input must contain exactly one polygon. Received {nrow(v)} feature{?s}.",
+      call = rlang::caller_env()
     )
   }
 
-  verbatimCRS <- terra::crs(v)
-  v <- terra::project(v, "EPSG:4326")
-
+  if (method %in% c("geo", "haversine") && !terra::is.lonlat(v)) {
+    transform_v <- TRUE
+    verbatimCRS <- terra::crs(v)
+    v <- terra::project(v, "EPSG:4326")
+  } else {
+    transform_v <- FALSE
+  }
 
   # Define all available metrics
   available_metrics <- c(
-    "area", "perimeter", "compactness", "reock",
-    "elongation_rectangle", "num_holes", "hole_area", "hole_area_pct",
-    "num_polygons", "ew_length", "ns_length", "maxlength", "bearing",
-    "northerness", "fractaldimension", "sinuosity", "shape_index",
-    "circularity_ratio", "decimallongitude", "decimallatitude"
+    "area",
+    "perimeter",
+    "compactness",
+    "reock",
+    "elongation_rectangle",
+    "num_holes",
+    "hole_area",
+    "hole_area_pct",
+    "num_polygons",
+    "ew_length",
+    "ns_length",
+    "maxlength",
+    "bearing",
+    "northerness",
+    "fractaldimension",
+    "sinuosity",
+    "shape_index",
+    "circularity_ratio",
+    "decimallongitude",
+    "decimallatitude"
   )
 
   # Validate and normalize metrics parameter
   if (!is.character(metrics)) {
-    stop("'metrics' must be a character string or vector")
+    cli::cli_abort(
+      "{.arg metrics} must be a character string or vector.",
+      call = rlang::caller_env()
+    )
   }
 
   if (length(metrics) == 1L && metrics == "all") {
@@ -200,11 +236,12 @@
   } else {
     invalid_metrics <- setdiff(metrics, available_metrics)
     if (length(invalid_metrics) > 0) {
-      stop(
-        "Invalid metric names: ",
-        paste(invalid_metrics, collapse = ", "),
-        "\nAvailable metrics: ",
-        paste(available_metrics, collapse = ", ")
+      cli::cli_abort(
+        c(
+          "Invalid metric name{?s}: {.val {invalid_metrics}}",
+          "i" = "Available metrics: {.val {available_metrics}}"
+        ),
+        call = rlang::caller_env()
       )
     }
     metrics_to_calc <- metrics
@@ -214,12 +251,26 @@
   # Some metrics depend on intermediate values that must be computed first.
 
   need_area <- any(
-    c("area", "hole_area_pct", "compactness", "reock",
-      "fractaldimension", "shape_index", "circularity_ratio") %in% metrics_to_calc
+    c(
+      "area",
+      "hole_area_pct",
+      "compactness",
+      "reock",
+      "fractaldimension",
+      "shape_index",
+      "circularity_ratio"
+    ) %in%
+      metrics_to_calc
   )
   need_perimeter <- any(
-    c("perimeter", "compactness", "fractaldimension",
-      "sinuosity", "shape_index") %in% metrics_to_calc
+    c(
+      "perimeter",
+      "compactness",
+      "fractaldimension",
+      "sinuosity",
+      "shape_index"
+    ) %in%
+      metrics_to_calc
   )
   need_maxlength <- any(
     c("maxlength", "sinuosity", "circularity_ratio") %in% metrics_to_calc
@@ -232,12 +283,19 @@
   )
 
   # Determine which intermediate objects are needed
-  need_hull <- need_maxlength || need_bearing ||
-    any(c("elongation_rectangle", "ew_length", "ns_length") %in% metrics_to_calc)
+  need_hull <- need_maxlength ||
+    need_bearing ||
+    any(
+      c("elongation_rectangle", "ew_length", "ns_length") %in% metrics_to_calc
+    )
   need_distant_pts <- need_maxlength || need_bearing
-  need_centroid <- any(c("decimallongitude", "decimallatitude") %in% metrics_to_calc)
+  need_centroid <- any(
+    c("decimallongitude", "decimallatitude") %in% metrics_to_calc
+  )
   need_mincircle <- "reock" %in% metrics_to_calc
-  need_inh <- any(c("num_holes", "hole_area", "hole_area_pct") %in% metrics_to_calc)
+  need_inh <- any(
+    c("num_holes", "hole_area", "hole_area_pct") %in% metrics_to_calc
+  )
   need_pols <- "num_polygons" %in% metrics_to_calc
 
   # --- Compute intermediate objects (each at most once) ---
@@ -256,7 +314,8 @@
       distance = need_maxlength,
       bearing = need_bearing,
       output = "value",
-      by_feature = FALSE
+      by_feature = FALSE,
+      method = method
     )
   }
 
@@ -284,7 +343,7 @@
 
   area_val <- NULL
   if (need_area) {
-    area_val <- terra::expanse(v, unit = "m", transform = TRUE)
+    area_val <- terra::expanse(v, unit = "m", transform = transform_v)
   }
 
   perimeter_val <- NULL
@@ -312,7 +371,11 @@
 
   hole_area_val <- NULL
   if (need_hole_area) {
-    hole_area_val <- sum(terra::expanse(inh, unit = "m", transform = TRUE))
+    hole_area_val <- sum(terra::expanse(
+      inh,
+      unit = "m",
+      transform = transform_v
+    ))
   }
 
   # --- Assign requested metrics to the output ---
@@ -330,7 +393,8 @@
   }
 
   if ("reock" %in% metrics_to_calc) {
-    v$reock <- area_val / terra::expanse(mincircle, unit = "m", transform = TRUE)
+    v$reock <- area_val /
+      terra::expanse(mincircle, unit = "m", transform = TRUE)
   }
 
   if ("elongation_rectangle" %in% metrics_to_calc) {
@@ -338,7 +402,8 @@
       hull,
       isHull = TRUE,
       output = "value",
-      by_feature = FALSE
+      by_feature = FALSE,
+      method = method
     )
   }
 
@@ -372,7 +437,8 @@
       isHull = TRUE,
       direction = extent_direction,
       output = "polygon",
-      by_feature = FALSE
+      by_feature = FALSE,
+      method = method
     )
     if ("ew_length" %in% metrics_to_calc) {
       v$ew_length <- extent_pol$ew_length
@@ -419,7 +485,9 @@
   }
 
   # Restore original CRS
-  v <- terra::project(v, verbatimCRS)
+  if (transform_v) {
+    v <- terra::project(v, verbatimCRS)
+  }
 
   return(v)
 }

@@ -6,14 +6,14 @@
 \alias{geomattR-package}
 \title{geomattR: Calculate Geometric Attributes of Spatial Polygons}
 \description{
-Calculate geometric and morphometric attributes of spatial polygons with
-geodesic accuracy. Computes area, perimeter, compactness, elongation,
-orientation, fractal dimension, and shape indices suitable for geospatial
-analysis, urban planning, and environmental science applications.
+Calculate geometric attributes of spatial polygons. Computes area, perimeter,
+compactness, elongation, orientation, fractal dimension, and shape indices suitable
+for geospatial analysis, urban planning, and environmental science applications.
 
-All measurements use geodesic calculations for accuracy across different
-coordinate reference systems. The package automatically handles both
-geographic (lon/lat) and projected CRS appropriately.
+By default, measurements use geodesic calculations for accuracy across
+large study regions (i.e. continental scale studies). The package supports the
+\code{"geo"}, \code{"haversine"}, and \code{"cosine"} methods and
+automatically handles geographic (lon/lat) and projected CRS appropriately.
 }
 \details{
 \subsection{Main Functions}{
@@ -36,12 +36,15 @@ execution.
 
 All calculations prioritize accuracy:
 \itemize{
-\item \strong{Area & Perimeter}: Use \code{terra::expanse()} with explicit
-\code{transform = TRUE} for automatic geodesic calculation; perimeter
-is computed on the EPSG:4326 representation
-\item \strong{Distances}: Use explicit \code{method = "geo"} for geodesic calculations
+\item \strong{Area & Perimeter}: Geodesic by default; projected input is handled
+transparently for methods that need geographic coordinates
+\item \strong{Distances}: Support \code{method = "geo"}, \code{"haversine"}, and \code{"cosine"}
+\item \strong{Bearing}: Computed from geographic coordinates when needed
 \item \strong{Automatic Projection}: Non-geographic CRS are handled transparently
 }
+
+Precise definitions of each reported metric are documented in
+\code{\link[=calculate_geometric_attributes]{calculate_geometric_attributes()}}.
 }
 
 \subsection{Example}{
@@ -76,7 +79,7 @@ Useful links:
 
 }
 \author{
-\strong{Maintainer}: Gabriel Ortega-Solís \email{g.ortega.solis@gmail.com} (\href{https://orcid.org/0000-0002-0516-5694}{ORCID})
+\strong{Maintainer}: Gabriel Ortega-Solís \email{g.ortega.solis@gmail.com} (\href{https://orcid.org/0000-0002-0516-5694}{ORCID}) [copyright holder]
 
 }
 \keyword{internal}

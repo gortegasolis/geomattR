@@ -30,7 +30,9 @@ extent values, or \code{"polygon"} to return the input geometry with the
 requested extent columns added.}
 
 \item{method}{Character string passed to \code{terra::distance()}.
-Defaults to \code{"geo"}.}
+Defaults to \code{"geo"} (recommended). Other supported options are
+\code{"haversine"} and \code{"cosine"}. See \code{\link[terra]{distance}}
+for more information.}
 
 \item{by_feature}{Logical. If \code{FALSE} (default), compute a single
 response from the convex hull of the whole input set. If \code{TRUE},
@@ -47,11 +49,20 @@ directions).
 }
 \description{
 Calculates east-west and/or north-south extent of a polygon based on its
-geographic bounding box.
+geographic bounding box corners.
 }
 \details{
-Extent is computed from the convex hull bounding box corners using
+Extent is computed from the bounding box of the polygon's convex hull. The Southwest (SW),
+Southeast (SE), Northwest (NW), and Northeast (NE) corners of this box are evaluated using
 \code{terra::distance()} with the selected \code{method}.
+
+The metric values are calculated as:
+\itemize{
+\item \strong{East-West Extent}: The average length of the top and bottom bounding box edges:
+\deqn{\text{EW} = \frac{d(SW, SE) + d(NW, NE)}{2}}
+\item \strong{North-South Extent}: The average length of the left and right bounding box edges:
+\deqn{\text{NS} = \frac{d(SW, NW) + d(SE, NE)}{2}}
+}
 When \code{method} is \code{"geo"} or \code{"haversine"}, the hull is
 projected to EPSG:4326 when needed before distance calculations.
 
@@ -65,6 +76,9 @@ a named numeric vector
 
 For \code{output = "polygon"}, only the requested extent columns are added
 as attributes.
+
+For interpretation and relation to other shape metrics, see
+\code{\link{calculate_geometric_attributes}}.
 }
 \examples{
 library(terra)

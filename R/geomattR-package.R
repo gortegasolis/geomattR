@@ -1,14 +1,14 @@
 #' geomattR: Calculate Geometric Attributes of Spatial Polygons
 #'
 #' @description
-#' Calculate geometric and morphometric attributes of spatial polygons with
-#' geodesic accuracy. Computes area, perimeter, compactness, elongation,
-#' orientation, fractal dimension, and shape indices suitable for geospatial
-#' analysis, urban planning, and environmental science applications.
+#' Calculate geometric attributes of spatial polygons. Computes area, perimeter, 
+#' compactness, elongation, orientation, fractal dimension, and shape indices suitable 
+#' for geospatial analysis, urban planning, and environmental science applications.
 #'
-#' All measurements use geodesic calculations for accuracy across different
-#' coordinate reference systems. The package automatically handles both
-#' geographic (lon/lat) and projected CRS appropriately.
+#' By default, measurements use geodesic calculations for accuracy across
+#' large study regions (i.e. continental scale studies). The package supports the
+#' \code{"geo"}, \code{"haversine"}, and \code{"cosine"} methods and
+#' automatically handles geographic (lon/lat) and projected CRS appropriately.
 #'
 #' @details
 #'
@@ -28,11 +28,14 @@
 #'
 #' All calculations prioritize accuracy:
 #'
-#' - **Area & Perimeter**: Use `terra::expanse()` with explicit
-#'   `transform = TRUE` for automatic geodesic calculation; perimeter
-#'   is computed on the EPSG:4326 representation
-#' - **Distances**: Use explicit `method = "geo"` for geodesic calculations
+#' - **Area & Perimeter**: Geodesic by default; projected input is handled
+#'   transparently for methods that need geographic coordinates
+#' - **Distances**: Support `method = "geo"`, `"haversine"`, and `"cosine"`
+#' - **Bearing**: Computed from geographic coordinates when needed
 #' - **Automatic Projection**: Non-geographic CRS are handled transparently
+#'
+#' Precise definitions of each reported metric are documented in
+#' [calculate_geometric_attributes()].
 #'
 #' ## Example
 #'

@@ -131,3 +131,86 @@ test_that("get_distant_points supports by_feature value output", {
   expect_equal(nrow(out_both), 2)
   expect_true(all(c("distance", "bearing") %in% names(out_both)))
 })
+
+test_that("get_distant_points compares geo haversine and cosine methods", {
+  .skip_if_proj_unavailable <- function() {
+    probe <- suppressWarnings(
+      try(
+        terra::vect(
+          cbind(c(0, 0, 1, 1, 0), c(0, 1, 1, 0, 0)),
+          type = "polygon",
+          crs = "EPSG:4326"
+        ),
+        silent = TRUE
+      )
+    )
+
+    if (inherits(probe, "try-error") || !nzchar(terra::crs(probe))) {
+      skip("PROJ database is unavailable; skipping method comparison test")
+    }
+  }
+
+  .skip_if_proj_unavailable()
+
+  coords <- cbind(c(0, 0, 1, 1, 0), c(0, 1, 1, 0, 0))
+  pol_ll <- terra::vect(coords, type = "polygon", crs = "EPSG:4326")
+  pol_3857 <- terra::project(pol_ll, "EPSG:3857")
+
+  outputs <- list(
+    geo = list(
+      ll = get_distant_points(pol_ll, method = "geo", distance = TRUE, bearing = FALSE, output = "value"),
+      projected = get_distant_points(pol_3857, method = "geo", distance = TRUE, bearing = FALSE, output = "value")
+    ),
+    haversine = list(
+      ll = get_distant_points(pol_ll, method = "haversine", distance = TRUE, bearing = FALSE, output = "value"),
+      projected = get_distant_points(pol_3857, method = "haversine", distance = TRUE, bearing = FALSE, output = "value")
+    ),
+    cosine = list(
+      ll = get_distant_points(pol_ll, method = "cosine", distance = TRUE, bearing = FALSE, output = "value"),
+      projected = get_distant_points(pol_3857, method = "cosine", distance = TRUE, bearing = FALSE, output = "value")
+    )
+  )
+
+  print(outputs)
+
+  expect_equal(outputs$geo$projected, outputs$geo$ll, tolerance = 1e-6)
+  expect_equal(outputs$haversine$projected, outputs$haversine$ll, tolerance = 1e-6)
+  expect_true(is.finite(outputs$cosine$ll))
+  expect_true(is.finite(outputs$cosine$projected))
+})
+
+test_that("get_distant_points handles bearing across geo haversine and cosine", {
+  .skip_if_proj_unavailable <- function() {
+    probe <- suppressWarnings(
+      try(
+        terra::vect(
+          cbind(c(0, 0, 1, 1, 0), c(0, 1, 1, 0, 0)),
+          type = "polygon",
+          crs = "EPSG:4326"
+        ),
+        silent = TRUE
+      )
+    )
+
+    if (inherits(probe, "try-error") || !nzchar(terra::crs(probe))) {
+      skip("PROJ database is unavailable; skipping bearing method comparison test")
+    }
+  }
+
+  .skip_if_proj_unavailable()
+
+  coords <- cbind(c(0, 0, 1, 1, 0), c(0, 1, 1, 0, 0))
+  pol_ll <- terra::vect(coords, type = "polygon", crs = "EPSG:4326")
+  pol_3857 <- terra::project(pol_ll, "EPSG:3857")
+
+  outputs <- list(
+    geo = get_distant_points(pol_3857, method = "geo", output = "points"),
+    haversine = get_distant_points(pol_3857, method = "haversine", output = "points"),
+    cosine = get_distant_points(pol_3857, method = "cosine", output = "points")
+  )
+
+  print(outputs)
+
+  expect_true(all(vapply(outputs, function(x) is.finite(x$distance) && is.finite(x$bearing), logical(1))))
+  expect_true(all(vapply(outputs, function(x) methods::is(x$south_point, "SpatVector") && methods::is(x$north_point, "SpatVector"), logical(1))))
+})

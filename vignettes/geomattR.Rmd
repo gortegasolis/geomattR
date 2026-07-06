@@ -17,9 +17,7 @@ knitr::opts_chunk$set(
 
 ## Introduction
 
-`geomattR` provides tools for calculating geometric and morphometric attributes of spatial polygons. Whether you're analyzing building footprints, administrative boundaries, habitat patches, or land parcels, this package makes it easy to extract meaningful shape and size measurements using geodesic base calculations for accuracy.
-
-Distance and area foundations in geomattR are computed geodesically, then used to derive higher-level shape indices. This keeps results consistent when your input data uses geographic (lon/lat) or projected coordinate reference systems.
+`geomattR` provides tools to compute geometric attributes of spatial polygons. By default, core spatial calculations use geodesic core measurements (method `"geo"`, which is recommended), but they also support `"haversine"` and `"cosine"` methods. For studies covering large countries, continents or the world, geodesic calculations on unprojected polygons (WGS84) improve accuracy and minimize shape distortion.
 
 ## Installation
 
@@ -80,12 +78,12 @@ print(polygon_with_size$perimeter)
 polygon_with_shape <- calculate_geometric_attributes(
   polygon,
   metrics = c(
-    "compactness",           # Polsby-Popper (0-1, 1=perfect circle)
-    "reock",                 # Reock compactness
-    "shape_index",           # Dimensionless shape complexity
-    "circularity_ratio",     # Based on max length
-    "fractaldimension",      # Boundary complexity
-    "elongation_rectangle"   # Ratio from minimum bounding rectangle approximation
+    "compactness", # Polsby-Popper (0-1, 1=perfect circle)
+    "reock", # Reock compactness
+    "shape_index", # Dimensionless shape complexity
+    "circularity_ratio", # Based on max length
+    "fractaldimension", # Boundary complexity
+    "elongation_rectangle" # mean(long sides) / mean(0, short side) from the minimum bounding rectangle
   )
 )
 
@@ -109,7 +107,7 @@ print(polygon_with_orient$bearing)
 # Northerness: cosine of bearing (-1=south, 0=east/west, 1=north)
 print(polygon_with_orient$northerness)
 
-# Extents in meters (geodesic)
+# Extents in meters: maximum distances from East to West and North to South
 print(paste("EW Extent:", round(polygon_with_orient$ew_length, 0), "m"))
 print(paste("NS Extent:", round(polygon_with_orient$ns_length, 0), "m"))
 ```
@@ -168,7 +166,7 @@ results <- calculate_geometric_attributes(
 )
 
 # Results have same row count as input
-print(nrow(results))  # 2
+print(nrow(results)) # 2
 
 # All metrics calculated
 print(results[, c("area", "perimeter", "compactness")])
@@ -182,7 +180,7 @@ For large datasets with many polygons, use the `cl` argument in `calculate_geome
 library(parallel)
 
 # Create multiple polygons
-polygons <- rbind(poly1, poly2)  # From previous example
+polygons <- rbind(poly1, poly2) # From previous example
 
 # Set up cluster
 n_cores <- detectCores() - 1
@@ -203,13 +201,11 @@ stopCluster(cl)
 print(head(results))
 ```
 
-This chunk is shown for reproducibility but is not executed during vignette
-build because parallel workers can invalidate external pointers for in-memory
-`terra` objects in isolated check environments.
-
 ## Handling Geographic vs. Projected CRS
 
-GeomattR automatically handles different coordinate systems:
+GeomattR automatically handles different coordinate systems. By default, core spatial calculations prioritize geodesic core measurements (method `"geo"`, which is recommended). However, for distance-based calculations, the helper functions (such as `calc_extent()` and `calc_elongation()`) accept a `method` parameter that can be changed to `"haversine"` or `"cosine"`. For details on these distance methods and how they behave, refer to the method descriptions in the `terra` package.
+
+Automatic CRS conversion handles the execution details:
 
 ```{r crs_handling}
 # Create polygon in geographic CRS (WGS84/EPSG:4326)
@@ -222,14 +218,14 @@ poly_projected <- project(poly_geographic, "EPSG:32630")
 result_geo <- calculate_geometric_attributes(poly_geographic, metrics = "area")
 result_proj <- calculate_geometric_attributes(poly_projected, metrics = "area")
 
-# Both should give similar results (using geodesic calculations)
+# Both should give similar results (using geodesic calculations by default)
 print(paste("Geographic CRS area:", round(result_geo$area, 0), "m²"))
 print(paste("Projected CRS area:", round(result_proj$area, 0), "m²"))
 
-# Difference should be minimal due to geodesic calculations
+# Difference should be minimal due to default geodesic calculations
 print(paste(
-  "Difference:", 
-  round(abs(result_geo$area - result_proj$area), 0), 
+  "Difference:",
+  round(abs(result_geo$area - result_proj$area), 0),
   "m²"
 ))
 ```

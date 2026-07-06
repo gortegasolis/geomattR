@@ -23,7 +23,9 @@ the elongation ratio, or \code{"polygon"} to return the input geometry
 with \code{elongation_rectangle} added as an attribute.}
 
 \item{method}{Character string passed to \code{terra::distance()}.
-Defaults to \code{"geo"}.}
+Defaults to \code{"geo"} (recommended). Other supported options are
+\code{"haversine"} and \code{"cosine"}. See \code{\link[terra]{distance}}
+for more information.}
 
 \item{by_feature}{Logical. If \code{FALSE} (default), compute a single
 response from the convex hull of the whole input set. If \code{TRUE},
@@ -41,12 +43,13 @@ values indicate more elongated shapes.
 \description{
 Calculates the elongation ratio of a polygon based on its minimum bounding
 rectangle. The minimum bounding rectangle is computed from the convex hull of
-the input polygon. In the current implementation, elongation is computed as
-the ratio between:
-\itemize{
-\item the mean length of the two largest sides
-\item the mean length of the two smallest sides
+the input polygon.
 }
+\details{
+In the current implementation, elongation is computed as the ratio of the mean
+of the two largest side lengths to the mean of the two shortest side lengths:
+\eqn{E = \frac{\text{mean}(\text{long sides})}{\text{mean}(\text{short sides})}}
+
 This approximation assumes the minimum bounding rectangle is unique,
 which may not always be the case. Consider this with caution.
 }
@@ -59,4 +62,7 @@ elongation <- calc_elongation(polygon)
 # Using a pre-computed convex hull
 hull_geom <- terra::hull(polygon, type = "convex")
 elongation_hull <- calc_elongation(hull_geom, isHull = TRUE)
+}
+\references{
+Dražić, Slobodan, Nebojša Ralević, and Joviša Žunić. ‘Shape Elongation from Optimal Encasing Rectangles’. Computers & Mathematics with Applications 60, no. 7 (2010): 2035–42. https://doi.org/10.1016/j.camwa.2010.07.043.
 }
