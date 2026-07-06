@@ -64,5 +64,5 @@ hull_geom <- terra::hull(polygon, type = "convex")
 elongation_hull <- calc_elongation(hull_geom, isHull = TRUE)
 }
 \references{
-Dražić, Slobodan, Nebojša Ralević, and Joviša Žunić. ‘Shape Elongation from Optimal Encasing Rectangles’. Computers & Mathematics with Applications 60, no. 7 (2010): 2035–42. https://doi.org/10.1016/j.camwa.2010.07.043.
+Dražić, Slobodan, Nebojša Ralević, and Joviša Žunić. Shape Elongation from Optimal Encasing Rectangles. \emph{Computers & Mathematics with Applications 60, no. 7 (2010): 2035–42}. \url{https://doi.org/10.1016/j.camwa.2010.07.043}.
 }

@@ -156,9 +156,7 @@ parallel::stopCluster(cl)
 }
 }
 \references{
-Reock, E. C. (1961). Measuring compactness as a requirement of legislative apportionment. \emph{Midwest Journal of Political Science}, 5(1), 70-74. \url{https://www.jstor.org/stable/2108990}
+Reock, E. C. (1961). Measuring compactness as a requirement of legislative apportionment. \emph{Midwest Journal of Political Science}, 5(1), 70-74. \url{https://doi.org/10.2307/2109043}
 
-Polsby, D. D., & Popper, F. J. (1991). The Third Annual Report of the Political Geography Specialty Group. \emph{Yale Law & Policy Review}, 9(2), 301-353. \url{https://www.jstor.org/stable/40239358}
-
-Dražić, Slobodan, Nebojša Ralević, and Joviša Žunić. ‘Shape Elongation from Optimal Encasing Rectangles’. Computers & Mathematics with Applications 60, no. 7 (2010): 2035–42. https://doi.org/10.1016/j.camwa.2010.07.043.
+Dražić, Slobodan, Nebojša Ralević, and Joviša Žunić. Shape Elongation from Optimal Encasing Rectangles. \emph{Computers & Mathematics with Applications 60, no. 7 (2010): 2035–42}. \url{https://doi.org/10.1016/j.camwa.2010.07.043}.
 }

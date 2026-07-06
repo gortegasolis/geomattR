@@ -5,8 +5,7 @@ Version: 0.1.0
 Authors@R: 
     person("Gabriel", "Ortega-Solís", , "g.ortega.solis@gmail.com", role = c("aut", "cre", "cph"),
            comment = c(ORCID = "0000-0002-0516-5694"))
-Description: Calculate geometric attributes of spatial polygons including area, perimeter, compactness, elongation, orientation (bearing), fractal dimension, and various shape indices. The package relies 
-heavily on 'terra' methods and vector data objects <https://github.com/rspatial/terra>.
+Description: Calculate geometric attributes of spatial polygons including area, perimeter, compactness, elongation, orientation (bearing), fractal dimension, and various shape indices. The package relies heavily on 'terra' methods and vector data objects <https://github.com/rspatial/terra>.
 License: MIT + file LICENSE
 URL: https://github.com/gortegasolis/geomattR
 BugReports: https://github.com/gortegasolis/geomattR/issues
