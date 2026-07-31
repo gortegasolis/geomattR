@@ -1,22 +1,5 @@
-.skip_if_proj_unavailable <- function() {
-  probe <- suppressWarnings(
-    try(
-      terra::vect(
-        cbind(c(0, 0, 1, 1, 0), c(0, 1, 1, 0, 0)),
-        type = "polygon",
-        crs = "EPSG:4326"
-      ),
-      silent = TRUE
-    )
-  )
-
-  if (inherits(probe, "try-error") || !nzchar(terra::crs(probe))) {
-    skip("PROJ database is unavailable; skipping geodesic elongation tests")
-  }
-}
-
 test_that("calc_elongation returns positive numeric value", {
-  .skip_if_proj_unavailable()
+  skip_if_proj_unavailable()
 
   coords <- cbind(c(0, 0, 1, 1, 0), c(0, 1, 1, 0, 0))
   pol <- terra::vect(coords, type = "polygon", crs = "EPSG:4326")
@@ -28,7 +11,7 @@ test_that("calc_elongation returns positive numeric value", {
 })
 
 test_that("calc_elongation uses precomputed hull consistently", {
-  .skip_if_proj_unavailable()
+  skip_if_proj_unavailable()
 
   coords <- cbind(c(0, 0, 1, 1, 0), c(0, 1, 1, 0, 0))
   pol <- terra::vect(coords, type = "polygon", crs = "EPSG:4326")
@@ -41,7 +24,7 @@ test_that("calc_elongation uses precomputed hull consistently", {
 })
 
 test_that("calc_elongation reprojects projected input for geo and haversine", {
-  .skip_if_proj_unavailable()
+  skip_if_proj_unavailable()
 
   coords <- cbind(c(0, 0, 1, 1, 0), c(0, 1, 1, 0, 0))
   pol_ll <- terra::vect(coords, type = "polygon", crs = "EPSG:4326")
@@ -57,7 +40,7 @@ test_that("calc_elongation reprojects projected input for geo and haversine", {
 })
 
 test_that("calc_elongation polygon output appends elongation_rectangle", {
-  .skip_if_proj_unavailable()
+  skip_if_proj_unavailable()
 
   coords <- cbind(c(0, 0, 1, 1, 0), c(0, 1, 1, 0, 0))
   pol <- terra::vect(coords, type = "polygon", crs = "EPSG:4326")
@@ -70,7 +53,7 @@ test_that("calc_elongation polygon output appends elongation_rectangle", {
 })
 
 test_that("calc_elongation validates output argument", {
-  .skip_if_proj_unavailable()
+  skip_if_proj_unavailable()
 
   coords <- cbind(c(0, 0, 1, 1, 0), c(0, 1, 1, 0, 0))
   pol <- terra::vect(coords, type = "polygon", crs = "EPSG:4326")
@@ -80,7 +63,7 @@ test_that("calc_elongation validates output argument", {
 })
 
 test_that("calc_elongation supports by_feature outputs", {
-  .skip_if_proj_unavailable()
+  skip_if_proj_unavailable()
 
   p1 <- terra::vect(cbind(c(0, 0, 1, 1, 0), c(0, 1, 1, 0, 0)), type = "polygon", crs = "EPSG:4326")
   p2 <- terra::vect(cbind(c(2, 2, 5, 5, 2), c(0, 1, 1, 0, 0)), type = "polygon", crs = "EPSG:4326")
@@ -98,7 +81,7 @@ test_that("calc_elongation supports by_feature outputs", {
 })
 
 test_that("calc_elongation uses long sides over short sides", {
-  .skip_if_proj_unavailable()
+  skip_if_proj_unavailable()
 
   # A clear rectangle makes side and diagonal distances distinct.
   coords <- cbind(c(0, 0, 4, 4, 0), c(0, 1, 1, 0, 0))
@@ -121,4 +104,47 @@ test_that("calc_elongation uses long sides over short sides", {
   expect_equal(out, expected, tolerance = 1e-10)
   expect_gt(abs(out - old_diagonal_based), 1e-8)
   expect_gt(abs(out - old_zero_in_denominator), 1e-8)
+})
+
+test_that("calc_elongation by_feature works with isHull = TRUE", {
+  skip_if_proj_unavailable()
+
+  p1 <- terra::vect(cbind(c(0, 0, 1, 1, 0), c(0, 1, 1, 0, 0)), type = "polygon", crs = "EPSG:4326")
+  p2 <- terra::vect(cbind(c(2, 2, 5, 5, 2), c(0, 1, 1, 0, 0)), type = "polygon", crs = "EPSG:4326")
+  hulls <- rbind(terra::hull(p1, type = "convex"), terra::hull(p2, type = "convex"))
+
+  out <- calc_elongation(hulls, isHull = TRUE, by_feature = TRUE)
+
+  expect_equal(length(out), 2)
+  expect_true(all(out > 0))
+})
+
+test_that("calc_elongation handles thin sliver", {
+  skip_if_proj_unavailable()
+
+  coords <- cbind(c(0, 0, 10, 10, 0), c(0, 0.001, 0.001, 0, 0))
+  pol <- terra::vect(coords, type = "polygon", crs = "EPSG:4326")
+
+  out <- calc_elongation(pol)
+
+  expect_true(out > 100)
+})
+
+test_that("sf input returns sf output with correct CRS", {
+  skip_if_not_installed("sf")
+  skip_if_proj_unavailable()
+
+  pol_sf <- sf::st_as_sf(
+    terra::vect(
+      cbind(c(0, 0, 1, 1, 0), c(0, 1, 1, 0, 0)),
+      type = "polygon",
+      crs = "EPSG:4326"
+    )
+  )
+
+  out <- calc_elongation(pol_sf, output = "polygon")
+
+  expect_s3_class(out, "sf")
+  expect_true("elongation_rectangle" %in% names(out))
+  expect_equal(sf::st_crs(out)$epsg, 4326L)
 })

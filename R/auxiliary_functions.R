@@ -1,4 +1,8 @@
+# Prepare polygon input for downstream metrics.
+# Main options: set isHull = TRUE to reuse a precomputed hull; method controls
+# whether hulls are reprojected to lon/lat for geodesic distance calculations.
 .prepare_metric_input <- function(v, isHull = FALSE, method = "geo") {
+
   isSf <- inherits(v, "sf")
   if (isSf) {
     v <- terra::vect(v)
@@ -11,6 +15,14 @@
     )
   }
 
+  geom_type <- unique(tolower(as.character(terra::geomtype(v))))
+  if (!all(geom_type %in% "polygons")) {
+    cli::cli_abort(
+      "{.arg v} must contain polygon geometries, not {.val {geom_type}}.",
+      call = rlang::caller_env()
+    )
+  }
+
   hull <- if (isHull) v else terra::hull(v, type = "convex")
   if (method %in% c("geo", "haversine") && !terra::is.lonlat(hull)) {
     hull <- terra::project(hull, "EPSG:4326")
@@ -19,6 +31,9 @@
   list(v = v, hull = hull, isSf = isSf)
 }
 
+# Return metric results either as raw values or appended polygon attributes.
+# Main options: output = "value" returns numeric results; output = "polygon"
+# adds named values back onto the original geometry and restores sf inputs.
 .return_metric_output <- function(v, isSf, output = "value", values) {
   if (length(output) != 1L) {
     cli::cli_abort(
@@ -60,7 +75,12 @@
   return(v)
 }
 
+# Clean hull coordinates before rotating-calipers calculations.
+# Main options: coords should contain x/y columns; repeated, missing, and
+# closing vertices are removed, and polygon orientation is normalized.
 .normalize_hull_coords <- function(coords) {
+  eps <- sqrt(.Machine$double.eps)
+
   xy <- as.matrix(coords[, 1:2, drop = FALSE])
   xy <- xy[stats::complete.cases(xy), , drop = FALSE]
 
@@ -71,12 +91,12 @@
   if (nrow(xy) > 1L) {
     keep <- c(
       TRUE,
-      rowSums(abs(xy[-1, , drop = FALSE] - xy[-nrow(xy), , drop = FALSE])) > 0
+      rowSums(abs(xy[-1, , drop = FALSE] - xy[-nrow(xy), , drop = FALSE])) > eps
     )
     xy <- xy[keep, , drop = FALSE]
   }
 
-  if (nrow(xy) > 1L && all(abs(xy[1, ] - xy[nrow(xy), ]) == 0)) {
+  if (nrow(xy) > 1L && all(abs(xy[1, ] - xy[nrow(xy), ]) < eps)) {
     xy <- xy[-nrow(xy), , drop = FALSE]
   }
 
@@ -94,6 +114,9 @@
   xy
 }
 
+# Enumerate antipodal hull-vertex pairs for maximum-distance searches.
+# Main options: tol controls how ties are treated when successive triangle
+# areas are numerically equal during the rotating-calipers sweep.
 .find_antipodal_pairs <- function(coords, tol = 1e-12) {
   n <- nrow(coords)
   if (n <= 1L) {
@@ -103,7 +126,10 @@
     return(matrix(c(1L, 2L), ncol = 2))
   }
 
+  # Wrap vertex indexes to keep calipers moving around the closed hull.
   idx <- function(k) ((k - 1L) %% n) + 1L
+
+  # Compare triangle areas to decide when an antipodal partner advances.
   tri_area2 <- function(i, j, k) {
     a <- coords[i, ]
     b <- coords[j, ]
@@ -116,10 +142,20 @@
     j <- idx(j + 1L)
   }
 
-  pairs <- matrix(numeric(0), ncol = 2)
+  pairs_list <- vector("list", n * 2L)
+  k <- 0L
+
+  add_pair <- function(a, b) {
+    if (k >= length(pairs_list)) {
+      pairs_list <<- c(pairs_list, vector("list", length(pairs_list)))
+    }
+    k <<- k + 1L
+    pairs_list[[k]] <<- c(as.integer(a), as.integer(b))
+  }
+
   for (i in seq_len(n)) {
     i_next <- idx(i + 1L)
-    pairs <- rbind(pairs, c(i, j))
+    add_pair(i, j)
 
     repeat {
       j_next <- idx(j + 1L)
@@ -128,29 +164,42 @@
 
       if (area_next > area_current + tol) {
         j <- j_next
-        pairs <- rbind(pairs, c(i, j))
+        add_pair(i, j)
       } else {
         if (abs(area_next - area_current) <= tol) {
-          pairs <- rbind(pairs, c(i, j_next))
+          add_pair(i, j_next)
         }
         break
       }
     }
   }
 
-  if (nrow(pairs) == 0L) {
+  if (k == 0L) {
     return(matrix(c(1L, 2L), ncol = 2))
   }
+
+  pairs <- do.call(rbind, pairs_list[seq_len(k)])
 
   pairs <- t(apply(pairs, 1, function(p) sort(as.integer(p))))
   unique(pairs)
 }
 
+# Compute east-west and north-south extents from hull bounding-box corners.
+# Main options: direction selects which axes to return, and method is passed to
+# terra::distance() for the edge-length calculations.
 .calc_extent_values <- function(
   hull,
   direction = c("ew", "ns"),
   method = "geo"
 ) {
+
+  if (nrow(hull) != 1) {
+    cli::cli_abort(
+      "Input must contain exactly one polygon. Received {nrow(hull)} feature{?s}.",
+      call = rlang::caller_env()
+    )
+  }
+
   b <- terra::ext(hull)
   crs_hull <- terra::crs(hull)
   pt_sw <- terra::vect(cbind(b$xmin, b$ymin), crs = crs_hull)
@@ -179,6 +228,9 @@
   values
 }
 
+# Calculate all requested metrics for a single polygon feature.
+# Main options: metrics = "all" expands to the full supported set; method
+# controls whether geographic calculations trigger a temporary lon/lat reprojection.
 .calculate_geometric_attributes_single <- function(
   v,
   metrics = "all",
@@ -394,7 +446,7 @@
 
   if ("reock" %in% metrics_to_calc) {
     v$reock <- area_val /
-      terra::expanse(mincircle, unit = "m", transform = TRUE)
+      terra::expanse(mincircle, unit = "m", transform = transform_v)
   }
 
   if ("elongation_rectangle" %in% metrics_to_calc) {

@@ -1,22 +1,5 @@
-.skip_if_proj_unavailable <- function() {
-  probe <- suppressWarnings(
-    try(
-      terra::vect(
-        cbind(c(0, 0, 1, 1, 0), c(0, 1, 1, 0, 0)),
-        type = "polygon",
-        crs = "EPSG:4326"
-      ),
-      silent = TRUE
-    )
-  )
-
-  if (inherits(probe, "try-error") || !nzchar(terra::crs(probe))) {
-    skip("PROJ database is unavailable; skipping geodesic extent tests")
-  }
-}
-
 test_that("calc_extent returns numeric values for single directions", {
-  .skip_if_proj_unavailable()
+  skip_if_proj_unavailable()
 
   coords <- cbind(c(0, 0, 1, 1, 0), c(0, 1, 1, 0, 0))
   pol <- terra::vect(coords, type = "polygon", crs = "EPSG:4326")
@@ -31,7 +14,7 @@ test_that("calc_extent returns numeric values for single directions", {
 })
 
 test_that("calc_extent returns both values when both directions are requested", {
-  .skip_if_proj_unavailable()
+  skip_if_proj_unavailable()
 
   coords <- cbind(c(0, 0, 1, 1, 0), c(0, 1, 1, 0, 0))
   pol <- terra::vect(coords, type = "polygon", crs = "EPSG:4326")
@@ -46,7 +29,7 @@ test_that("calc_extent returns both values when both directions are requested", 
 })
 
 test_that("calc_extent polygon output appends only requested columns", {
-  .skip_if_proj_unavailable()
+  skip_if_proj_unavailable()
 
   coords <- cbind(c(0, 0, 1, 1, 0), c(0, 1, 1, 0, 0))
   pol <- terra::vect(coords, type = "polygon", crs = "EPSG:4326")
@@ -60,7 +43,7 @@ test_that("calc_extent polygon output appends only requested columns", {
 })
 
 test_that("calc_extent polygon output appends both columns when both directions requested", {
-  .skip_if_proj_unavailable()
+  skip_if_proj_unavailable()
 
   coords <- cbind(c(0, 0, 1, 1, 0), c(0, 1, 1, 0, 0))
   pol <- terra::vect(coords, type = "polygon", crs = "EPSG:4326")
@@ -75,7 +58,7 @@ test_that("calc_extent polygon output appends both columns when both directions 
 })
 
 test_that("calc_extent validates output argument", {
-  .skip_if_proj_unavailable()
+  skip_if_proj_unavailable()
 
   coords <- cbind(c(0, 0, 1, 1, 0), c(0, 1, 1, 0, 0))
   pol <- terra::vect(coords, type = "polygon", crs = "EPSG:4326")
@@ -86,7 +69,7 @@ test_that("calc_extent validates output argument", {
 })
 
 test_that("calc_extent uses precomputed hull consistently", {
-  .skip_if_proj_unavailable()
+  skip_if_proj_unavailable()
 
   coords <- cbind(c(0, 0, 1, 1, 0), c(0, 1, 1, 0, 0))
   pol <- terra::vect(coords, type = "polygon", crs = "EPSG:4326")
@@ -106,7 +89,7 @@ test_that("calc_extent uses precomputed hull consistently", {
 })
 
 test_that("calc_extent reprojects projected input for geo and haversine", {
-  .skip_if_proj_unavailable()
+  skip_if_proj_unavailable()
 
   coords <- cbind(c(0, 0, 1, 1, 0), c(0, 1, 1, 0, 0))
   pol_ll <- terra::vect(coords, type = "polygon", crs = "EPSG:4326")
@@ -122,7 +105,7 @@ test_that("calc_extent reprojects projected input for geo and haversine", {
 })
 
 test_that("calc_extent supports by_feature value output", {
-  .skip_if_proj_unavailable()
+  skip_if_proj_unavailable()
 
   p1 <- terra::vect(cbind(c(0, 0, 1, 1, 0), c(0, 1, 1, 0, 0)), type = "polygon", crs = "EPSG:4326")
   p2 <- terra::vect(cbind(c(2, 2, 4, 4, 2), c(0, 1, 1, 0, 0)), type = "polygon", crs = "EPSG:4326")
@@ -139,7 +122,7 @@ test_that("calc_extent supports by_feature value output", {
 })
 
 test_that("calc_extent supports by_feature polygon output", {
-  .skip_if_proj_unavailable()
+  skip_if_proj_unavailable()
 
   p1 <- terra::vect(cbind(c(0, 0, 1, 1, 0), c(0, 1, 1, 0, 0)), type = "polygon", crs = "EPSG:4326")
   p2 <- terra::vect(cbind(c(2, 2, 4, 4, 2), c(0, 1, 1, 0, 0)), type = "polygon", crs = "EPSG:4326")
@@ -151,4 +134,18 @@ test_that("calc_extent supports by_feature polygon output", {
   expect_equal(nrow(out), 2)
   expect_true(all(c("ew_length", "ns_length") %in% names(out)))
   expect_false(isTRUE(all.equal(out$ew_length[1], out$ew_length[2])))
+})
+
+test_that("calc_extent by_feature works with isHull = TRUE", {
+  skip_if_proj_unavailable()
+
+  p1 <- terra::vect(cbind(c(0, 0, 1, 1, 0), c(0, 1, 1, 0, 0)), type = "polygon", crs = "EPSG:4326")
+  p2 <- terra::vect(cbind(c(2, 2, 4, 4, 2), c(0, 1, 1, 0, 0)), type = "polygon", crs = "EPSG:4326")
+  hulls <- rbind(terra::hull(p1, type = "convex"), terra::hull(p2, type = "convex"))
+
+  out <- calc_extent(hulls, isHull = TRUE, direction = c("ew", "ns"), output = "value", by_feature = TRUE)
+
+  expect_true(is.data.frame(out))
+  expect_equal(nrow(out), 2)
+  expect_true(all(c("ew_length", "ns_length") %in% names(out)))
 })

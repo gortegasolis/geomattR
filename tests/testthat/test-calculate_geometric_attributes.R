@@ -65,8 +65,6 @@ test_that("calculate_geometric_attributes compares geo haversine and cosine meth
     )
   )
 
-  print(outputs)
-
   expect_equal(outputs$geo$projected$area, outputs$geo$ll$area, tolerance = 1e-6)
   expect_equal(outputs$geo$projected$perimeter, outputs$geo$ll$perimeter, tolerance = 1e-6)
   expect_equal(outputs$haversine$projected$area, outputs$haversine$ll$area, tolerance = 1e-6)
@@ -86,8 +84,6 @@ test_that("calculate_geometric_attributes handles all metrics across geo haversi
     cosine = calculate_geometric_attributes(pol_3857, metrics = "all", method = "cosine")
   )
 
-  print(outputs)
-
   expected_cols <- c(
     "area", "perimeter", "compactness", "reock",
     "elongation_rectangle", "num_holes", "hole_area", "hole_area_pct",
@@ -104,4 +100,22 @@ test_that("calculate_geometric_attributes handles all metrics across geo haversi
     expect_false(terra::is.lonlat(result))
     expect_true(all(vapply(expected_cols, function(col) is.finite(unlist(result[[col]])[1]), logical(1))))
   }
+})
+
+test_that("reock is consistent for cosine method on projected CRS", {
+  pol_ll <- terra::vect(
+    cbind(c(0, 0, 1, 1, 0), c(0, 1, 1, 0, 0)),
+    type = "polygon",
+    crs = "EPSG:4326"
+  )
+  pol_proj <- terra::project(pol_ll, "EPSG:3857")
+
+  result <- calculate_geometric_attributes(
+    pol_proj,
+    metrics = c("area", "reock"),
+    method = "cosine"
+  )
+
+  expect_true(result$reock > 0)
+  expect_true(result$reock <= 1)
 })

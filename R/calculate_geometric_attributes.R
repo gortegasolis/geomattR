@@ -23,6 +23,10 @@
 #'   Passing a cluster enables parallel processing across the cluster workers.
 #' 
 #' @param method Character string specifying the method for calculations.
+#' @param by_feature Logical. If \code{TRUE} (default), compute metrics for each
+#'   feature independently. If \code{FALSE}, non-spatial columns are dropped,
+#'   features are dissolved into a single geometry, and one set of metrics is
+#'   returned.
 #'
 #' @return The input SpatVector with additional columns containing the requested
 #'   geometric attributes:
@@ -73,6 +77,15 @@
 #' Inputs are internally projected to EPSG:4326 when a metric requires
 #' geographic coordinates and restored to the original CRS on return when
 #' applicable.
+#'
+#' \strong{Scope of the \code{method} parameter:}
+#' The \code{method} argument is passed to \code{terra::distance()} for
+#' distance-based metrics (extent, maxlength, and elongation). Area
+#' (\code{terra::expanse()}) and perimeter (\code{terra::perim()}) use
+#' terra's built-in CRS-dependent calculations: geodesic for geographic
+#' (lon/lat) CRS, Cartesian for projected CRS. When \code{method = "geo"} or
+#' \code{"haversine"} and the input has a projected CRS, the geometry is
+#' temporarily reprojected to EPSG:4326 where required by downstream metrics.
 #'
 #' \strong{Size metrics:}
 #' \itemize{
@@ -125,9 +138,9 @@
 #'
 #' @references
 #'
-#' Reock, E. C. (1961). Measuring compactness as a requirement of legislative apportionment. \emph{Midwest Journal of Political Science}, 5(1), 70-74. \url{https://doi.org/10.2307/2109043}
+#' Reock, E. C. (1961). Measuring compactness as a requirement of legislative apportionment. \emph{Midwest Journal of Political Science}, 5(1), 70-74. \doi{10.2307/2109043}
 #'
-#' Dražić, Slobodan, Nebojša Ralević, and Joviša Žunić. Shape Elongation from Optimal Encasing Rectangles. \emph{Computers & Mathematics with Applications 60, no. 7 (2010): 2035–42}. \url{https://doi.org/10.1016/j.camwa.2010.07.043}.
+#' Dražić, Slobodan, Nebojša Ralević, and Joviša Žunić. Shape Elongation from Optimal Encasing Rectangles. \emph{Computers & Mathematics with Applications 60, no. 7 (2010): 2035–42}. \doi{10.1016/j.camwa.2010.07.043}.
 #' 
 #' @export
 #'
@@ -152,14 +165,23 @@
 #' result <- calculate_geometric_attributes(polygons, cl = cl)
 #' parallel::stopCluster(cl)
 #' }
-calculate_geometric_attributes <- function(v, metrics = "all", cl = NULL, method = "geo") {
+calculate_geometric_attributes <- function(v, metrics = "all", cl = NULL, method = "geo", by_feature = TRUE) {
   # Validate input
   if (!methods::is(v, "SpatVector")) {
     if (methods::is(v, "sf")) {
-      v <- terra::as.SpatVector(v)
+      v <- terra::vect(v)
     } else {
       cli::cli_abort("{.arg v} must be a SpatVector or sf object", call = rlang::caller_env())
     }
+  }
+
+  if (!by_feature) {
+    cli::cli_warn(c(
+      "{.arg by_feature} is {.val FALSE}.",
+      "i" = "Non-spatial columns will be dropped and features dissolved into a single geometry."
+    ))
+    v <- subset(v, subset = TRUE, select = NULL)
+    v <- aggregate(v, by = NULL, dissolve = TRUE)
   }
 
   n_features <- nrow(v)

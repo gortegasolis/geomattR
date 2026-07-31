@@ -13,7 +13,7 @@
 #' which may not always be the case. Consider this with caution.
 #'
 #' @references
-#' Dražić, Slobodan, Nebojša Ralević, and Joviša Žunić. Shape Elongation from Optimal Encasing Rectangles. \emph{Computers & Mathematics with Applications 60, no. 7 (2010): 2035–42}. \url{https://doi.org/10.1016/j.camwa.2010.07.043}.
+#' Dražić, Slobodan, Nebojša Ralević, and Joviša Žunić. Shape Elongation from Optimal Encasing Rectangles. \emph{Computers & Mathematics with Applications 60, no. 7 (2010): 2035–42}. \doi{10.1016/j.camwa.2010.07.043}.
 #' 
 #' @param v A SpatVector object representing a polygon, or a pre-computed convex hull if \code{isHull = TRUE}.
 #' @param isHull Logical. If \code{TRUE}, \code{v} is treated as a pre-computed convex hull.

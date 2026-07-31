@@ -1,7 +1,7 @@
 Package: geomattR
 Type: Package
 Title: Calculate Geometric Attributes of Spatial Polygons
-Version: 0.1.0
+Version: 0.1.1
 Authors@R: 
     person("Gabriel", "Ortega-Solís", , "g.ortega.solis@gmail.com", role = c("aut", "cre", "cph"),
            comment = c(ORCID = "0000-0002-0516-5694"))

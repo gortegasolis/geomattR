@@ -10,3 +10,4 @@
 ^geomattR\.Rcheck$
 ^geomattR_.*\.tar\.gz$
 ^geomattR-manual\.pdf$
+^AI_plans$

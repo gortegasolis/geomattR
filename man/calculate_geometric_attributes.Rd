@@ -4,7 +4,13 @@
 \alias{calculate_geometric_attributes}
 \title{Calculate Geometric Attributes of Spatial Polygons}
 \usage{
-calculate_geometric_attributes(v, metrics = "all", cl = NULL, method = "geo")
+calculate_geometric_attributes(
+  v,
+  metrics = "all",
+  cl = NULL,
+  method = "geo",
+  by_feature = TRUE
+)
 }
 \arguments{
 \item{v}{A SpatVector object representing one or more polygons.}
@@ -27,6 +33,11 @@ Available metric names: "area", "perimeter", "compactness", "reock",
 Passing a cluster enables parallel processing across the cluster workers.}
 
 \item{method}{Character string specifying the method for calculations.}
+
+\item{by_feature}{Logical. If \code{TRUE} (default), compute metrics for each
+feature independently. If \code{FALSE}, non-spatial columns are dropped,
+features are dissolved into a single geometry, and one set of metrics is
+returned.}
 }
 \value{
 The input SpatVector with additional columns containing the requested
@@ -83,6 +94,15 @@ alternative to \code{geo}), and \code{"cosine"} (for planar CRS).
 Inputs are internally projected to EPSG:4326 when a metric requires
 geographic coordinates and restored to the original CRS on return when
 applicable.
+
+\strong{Scope of the \code{method} parameter:}
+The \code{method} argument is passed to \code{terra::distance()} for
+distance-based metrics (extent, maxlength, and elongation). Area
+(\code{terra::expanse()}) and perimeter (\code{terra::perim()}) use
+terra's built-in CRS-dependent calculations: geodesic for geographic
+(lon/lat) CRS, Cartesian for projected CRS. When \code{method = "geo"} or
+\code{"haversine"} and the input has a projected CRS, the geometry is
+temporarily reprojected to EPSG:4326 where required by downstream metrics.
 
 \strong{Size metrics:}
 \itemize{
@@ -156,7 +176,7 @@ parallel::stopCluster(cl)
 }
 }
 \references{
-Reock, E. C. (1961). Measuring compactness as a requirement of legislative apportionment. \emph{Midwest Journal of Political Science}, 5(1), 70-74. \url{https://doi.org/10.2307/2109043}
+Reock, E. C. (1961). Measuring compactness as a requirement of legislative apportionment. \emph{Midwest Journal of Political Science}, 5(1), 70-74. \doi{10.2307/2109043}
 
-Dražić, Slobodan, Nebojša Ralević, and Joviša Žunić. Shape Elongation from Optimal Encasing Rectangles. \emph{Computers & Mathematics with Applications 60, no. 7 (2010): 2035–42}. \url{https://doi.org/10.1016/j.camwa.2010.07.043}.
+Dražić, Slobodan, Nebojša Ralević, and Joviša Žunić. Shape Elongation from Optimal Encasing Rectangles. \emph{Computers & Mathematics with Applications 60, no. 7 (2010): 2035–42}. \doi{10.1016/j.camwa.2010.07.043}.
 }
