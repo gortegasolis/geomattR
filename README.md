@@ -6,6 +6,8 @@
 
 ## Overview
 
+*Honestly, I use developing this package as a way to learn about spatial indices by decomposing their formulas and explaining to myself how they work while writing the documentation.*
+
 `geomattR` provides a comprehensive toolkit for calculating geometric and morphometric attributes of spatial polygons. It computes area, perimeter, compactness, elongation, orientation, fractal dimension, and various shape indices.
 
 This package is particularly useful for: - **Geospatial analysts** analyzing shape and size of geographic features - **Urban planners** characterizing building and neighborhood geometry - **Environmental scientists** studying habitat patch metrics - **Remote sensing practitioners** extracting morphological features from vector data - **Landscape ecologists** quantifying landscape structure - **Political scientists** examining electoral district shapes - **Epidemiologists** analyzing spatial spread patterns
