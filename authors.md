@@ -8,7 +8,7 @@
 ## Citation
 
 Source:
-[`inst/CITATION`](https://github.com/gortegasolis/geomattR/blob/main/inst/CITATION)
+[`inst/CITATION`](https://github.com/gortegasolis/geomattR/blob/geomattR_0.3.0/inst/CITATION)
 
 Ortega-Solís G (2026). *geomattR: Calculate Geometric Attributes of
 Spatial Polygons*. R package version 0.3.0,
