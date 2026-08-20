@@ -80,30 +80,33 @@ test_that("calc_elongation supports by_feature outputs", {
   expect_equal(as.numeric(out_pol$elongation_rectangle), as.numeric(out_val), tolerance = 1e-10)
 })
 
-test_that("calc_elongation uses long sides over short sides", {
+test_that("calc_elongation returns known values for rectangles", {
   skip_if_proj_unavailable()
 
-  # A clear rectangle makes side and diagonal distances distinct.
-  coords <- cbind(c(0, 0, 4, 4, 0), c(0, 1, 1, 0, 0))
-  pol <- terra::vect(coords, type = "polygon", crs = "EPSG:4326")
+  # Projected CRS so distances are exact Cartesian values.
+  wide <- terra::vect(
+    cbind(c(0, 0, 4000, 4000, 0), c(0, 1000, 1000, 0, 0)),
+    type = "polygon",
+    crs = "EPSG:3857"
+  )
+  square <- terra::vect(
+    cbind(c(0, 0, 1000, 1000, 0), c(0, 1000, 1000, 0, 0)),
+    type = "polygon",
+    crs = "EPSG:3857"
+  )
 
-  out <- calc_elongation(pol, method = "cosine")
+  expect_equal(calc_elongation(wide, method = "cosine"), 4, tolerance = 1e-6)
+  expect_equal(calc_elongation(square, method = "cosine"), 1, tolerance = 1e-6)
 
-  hull <- terra::hull(pol, type = "convex")
-  rect <- terra::hull(hull, type = "rectangle")
-  rect_pts <- terra::vect(terra::crds(rect), crs = terra::crs(rect))
-  d <- terra::distance(rect_pts, method = "cosine")
-
-  d_desc <- sort(d, decreasing = TRUE)
-  d_asc <- sort(d, decreasing = FALSE)
-
-  expected <- mean(d_desc[4:5]) / mean(d_asc[2:3])
-  old_diagonal_based <- mean(d_desc[1:2]) / mean(d_asc[2:3])
-  old_zero_in_denominator <- mean(d_desc[4:5]) / mean(d_asc[1:2])
-
-  expect_equal(out, expected, tolerance = 1e-10)
-  expect_gt(abs(out - old_diagonal_based), 1e-8)
-  expect_gt(abs(out - old_zero_in_denominator), 1e-8)
+  # An off-axis 4x1 rectangle must give the same ratio.
+  angle <- pi / 6
+  rot <- cbind(c(0, 0, 4000, 4000, 0), c(0, 1000, 1000, 0, 0))
+  rot <- cbind(
+    rot[, 1] * cos(angle) - rot[, 2] * sin(angle),
+    rot[, 1] * sin(angle) + rot[, 2] * cos(angle)
+  )
+  tilted <- terra::vect(rot, type = "polygon", crs = "EPSG:3857")
+  expect_equal(calc_elongation(tilted, method = "cosine"), 4, tolerance = 1e-6)
 })
 
 test_that("calc_elongation by_feature works with isHull = TRUE", {

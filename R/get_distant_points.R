@@ -5,10 +5,12 @@
 #' from the southernmost to the northernmost point.
 #'
 #' @details
-#' The most distant hull-vertex pair is found using the rotating calipers algorithm
-#' over the convex hull (linear complexity in the number of hull vertices). Distances
-#' are evaluated for candidate antipodal pairs using \code{terra::distance()} with
-#' the selected \code{method}.
+#' Distances between \strong{all} convex-hull vertex pairs are evaluated with
+#' \code{terra::distance()} using the selected \code{method}, so the returned
+#' pair is the true geodesic maximum (hulls are small, so the exhaustive
+#' search is cheap). An earlier rotating-calipers implementation searched
+#' antipodal pairs in planar coordinate space, which could miss the geodesic
+#' maximum on lon/lat data.
 #'
 #' \strong{Tie-breaking & Point Ordering:}
 #' If multiple antipodal pairs share the maximum distance, ties are broken by selecting the
@@ -35,8 +37,9 @@
 #'   columns added.
 #' @param method Character string passed to \code{terra::distance()}.
 #'   Defaults to \code{"geo"} (recommended). Other supported options are
-#'   \code{"haversine"} and \code{"cosine"}. Bearing is computed from
-#'   geographic coordinates when needed.
+#'   \code{"haversine"} and \code{"cosine"}. All three are lon/lat great-circle
+#'   methods; on a projected CRS, \code{method} is ignored and distances are
+#'   Cartesian. Bearing is computed from geographic coordinates when needed.
 #' @param by_feature Logical. If \code{FALSE} (default), compute a single
 #'   response from the convex hull of the whole input set. If \code{TRUE},
 #'   compute one response per polygon feature.
@@ -45,8 +48,11 @@
 #'   \item{south_point}{SpatVector of the southernmost point}
 #'   \item{north_point}{SpatVector of the northernmost point}
 #'   \item{distance}{Maximum distance in meters (if \code{distance = TRUE})}
-#'   \item{bearing}{Geographic bearing from south to north in degrees (if
-#'     \code{bearing = TRUE})}
+#'   \item{bearing}{Axial orientation: geographic bearing from the southernmost
+#'     to the northernmost point, in degrees within \[-90, 90\] (if
+#'     \code{bearing = TRUE}). Because the pair is always ordered south to
+#'     north, this describes the orientation of the longest axis, not a travel
+#'     direction: -90/90 is east-west, 0 is north-south.}
 #' For \code{output = "value"}, returns a numeric scalar when one metric is
 #' requested, or a named numeric vector when both are requested.
 #' For \code{output = "polygon"}, returns the input geometry with the
@@ -85,7 +91,7 @@ get_distant_points <- function(v, isHull = FALSE, distance = TRUE, bearing = TRU
   prep_method <- if (bearing) "geo" else method
 
   if (by_feature) {
-    prep_all <- .prepare_metric_input(v = v, isHull = isHull, method = prep_method)
+    prep_all <- .prepare_metric_input(v = v, isHull = isHull, method = prep_method, build_hull = FALSE)
     n <- nrow(prep_all$v)
     per_out <- lapply(seq_len(n), function(i) {
       get_distant_points(
@@ -142,35 +148,31 @@ get_distant_points <- function(v, isHull = FALSE, distance = TRUE, bearing = TRU
   if (n == 1L) {
     subset_hull <- points_hull[c(1, 1), ]
   } else {
-    candidate_pairs <- .find_antipodal_pairs(coords)
+    # Evaluate all hull-vertex pairs geodesically in a single vectorised call;
+    # planar antipodal-pair candidates can miss the geodesic maximum.
+    candidate_pairs <- which(upper.tri(matrix(0, n, n)), arr.ind = TRUE)
 
-    best_dist <- -Inf
-    best_pair <- candidate_pairs[1, ]
+    dists <- as.numeric(terra::distance(
+      points_hull[candidate_pairs[, 1], ],
+      points_hull[candidate_pairs[, 2], ],
+      method = method,
+      pairwise = TRUE
+    ))
+
+    # Among the (near-)maximal pairs, select the one whose southern endpoint
+    # is southernmost (then westernmost).
+    tied <- which(dists >= max(dists) - 1e-9)
+    best_pair <- candidate_pairs[tied[1], ]
     best_south <- c(Inf, Inf)
-
-    for (i in seq_len(nrow(candidate_pairs))) {
+    for (i in tied) {
       pair <- candidate_pairs[i, ]
-      p1 <- points_hull[pair[1], ]
-      p2 <- points_hull[pair[2], ]
-      d <- terra::distance(p1, p2, method = method)
-
       pair_coords <- coords[pair, , drop = FALSE]
       order_idx <- order(pair_coords[, 2], pair_coords[, 1])
       south_coords <- pair_coords[order_idx[1], ]
 
-      better <- FALSE
-      if (d > best_dist + 1e-9) {
-        better <- TRUE
-      } else if (abs(d - best_dist) <= 1e-9) {
-        if (south_coords[2] < best_south[2] - 1e-12 ||
-          (abs(south_coords[2] - best_south[2]) <= 1e-12 &&
-            south_coords[1] < best_south[1] - 1e-12)) {
-          better <- TRUE
-        }
-      }
-
-      if (better) {
-        best_dist <- d
+      if (south_coords[2] < best_south[2] - 1e-12 ||
+        (abs(south_coords[2] - best_south[2]) <= 1e-12 &&
+          south_coords[1] < best_south[1] - 1e-12)) {
         best_pair <- pair
         best_south <- south_coords
       }

@@ -119,3 +119,35 @@ test_that("reock is consistent for cosine method on projected CRS", {
   expect_true(result$reock > 0)
   expect_true(result$reock <= 1)
 })
+
+test_that("vectorised simple-metrics path matches per-feature results", {
+  skip_if_proj_unavailable()
+
+  coords <- cbind(c(0, 0, 1, 1, 0), c(0, 1, 1, 0, 0))
+  p1 <- terra::vect(coords, type = "polygon", crs = "EPSG:4326")
+  p2 <- terra::shift(p1, dx = 5, dy = 10)
+  v2 <- rbind(p1, p2)
+  v2_proj <- terra::project(v2, "EPSG:3857")
+
+  mets <- c("area", "perimeter", "decimallongitude", "decimallatitude")
+  fast <- calculate_geometric_attributes(v2, metrics = mets)
+
+  for (i in seq_len(2)) {
+    slow <- calculate_geometric_attributes(v2[i, ], metrics = mets)
+    for (m in mets) {
+      expect_equal(as.numeric(fast[[m]][[1]][i]), as.numeric(slow[[m]][[1]][1]))
+    }
+  }
+
+  # Projected CRS + cosine must also match (no reprojection on that path)
+  fast_c <- calculate_geometric_attributes(v2_proj, metrics = mets, method = "cosine")
+  for (i in seq_len(2)) {
+    slow_c <- calculate_geometric_attributes(v2_proj[i, ], metrics = mets, method = "cosine")
+    for (m in mets) {
+      expect_equal(as.numeric(fast_c[[m]][[1]][i]), as.numeric(slow_c[[m]][[1]][1]))
+    }
+  }
+
+  # Invalid metric names still error
+  expect_error(calculate_geometric_attributes(v2, metrics = c("area", "bogus")))
+})

@@ -45,8 +45,9 @@
 #'   requested extent columns added.
 #' @param method Character string passed to \code{terra::distance()}.
 #'   Defaults to \code{"geo"} (recommended). Other supported options are
-#'   \code{"haversine"} and \code{"cosine"}. See \code{\link[terra]{distance}}
-#'   for more information.
+#'   \code{"haversine"} and \code{"cosine"}. All three are lon/lat great-circle
+#'   methods; on a projected CRS, \code{method} is ignored and distances are
+#'   Cartesian. See \code{\link[terra]{distance}} for more information.
 #' @param by_feature Logical. If \code{FALSE} (default), compute a single
 #'   response from the convex hull of the whole input set. If \code{TRUE},
 #'   compute one response per polygon feature.
@@ -93,7 +94,7 @@ calc_extent <- function(v, isHull = FALSE, direction = c("ew", "ns"), output = "
   }
 
   if (by_feature) {
-    prep_all <- .prepare_metric_input(v = v, isHull = isHull, method = method)
+    prep_all <- .prepare_metric_input(v = v, isHull = isHull, method = method, build_hull = FALSE)
     n <- nrow(prep_all$v)
     per_values <- lapply(seq_len(n), function(i) {
       calc_extent(
@@ -117,11 +118,18 @@ calc_extent <- function(v, isHull = FALSE, direction = c("ew", "ns"), output = "
     }
 
     out_v <- prep_all$v
+    # With a single direction the value output is an unnamed scalar, so
+    # index positionally instead of by name.
+    extract_value <- if (length(direction) == 1L) {
+      function(x, name) as.numeric(x[1])
+    } else {
+      function(x, name) as.numeric(x[[name]])
+    }
     if ("ew" %in% direction) {
-      out_v$ew_length <- vapply(per_values, function(x) as.numeric(x[["ew_length"]]), numeric(1))
+      out_v$ew_length <- vapply(per_values, extract_value, numeric(1), name = "ew_length")
     }
     if ("ns" %in% direction) {
-      out_v$ns_length <- vapply(per_values, function(x) as.numeric(x[["ns_length"]]), numeric(1))
+      out_v$ns_length <- vapply(per_values, extract_value, numeric(1), name = "ns_length")
     }
 
     if (prep_all$isSf) {

@@ -37,16 +37,20 @@ compute one response per polygon feature.}
 
 \item{method}{Character string passed to \code{terra::distance()}.
 Defaults to \code{"geo"} (recommended). Other supported options are
-\code{"haversine"} and \code{"cosine"}. Bearing is computed from
-geographic coordinates when needed.}
+\code{"haversine"} and \code{"cosine"}. All three are lon/lat great-circle
+methods; on a projected CRS, \code{method} is ignored and distances are
+Cartesian. Bearing is computed from geographic coordinates when needed.}
 }
 \value{
 For \code{output = "points"}, a list containing:
 \item{south_point}{SpatVector of the southernmost point}
 \item{north_point}{SpatVector of the northernmost point}
 \item{distance}{Maximum distance in meters (if \code{distance = TRUE})}
-\item{bearing}{Geographic bearing from south to north in degrees (if
-\code{bearing = TRUE})}
+\item{bearing}{Axial orientation: geographic bearing from the southernmost
+to the northernmost point, in degrees within [-90, 90] (if
+\code{bearing = TRUE}). Because the pair is always ordered south to
+north, this describes the orientation of the longest axis, not a travel
+direction: -90/90 is east-west, 0 is north-south.}
 For \code{output = "value"}, returns a numeric scalar when one metric is
 requested, or a named numeric vector when both are requested.
 For \code{output = "polygon"}, returns the input geometry with the
@@ -61,10 +65,12 @@ calculates their distance (using the selected \code{method}) and the bearing
 from the southernmost to the northernmost point.
 }
 \details{
-The most distant hull-vertex pair is found using the rotating calipers algorithm
-over the convex hull (linear complexity in the number of hull vertices). Distances
-are evaluated for candidate antipodal pairs using \code{terra::distance()} with
-the selected \code{method}.
+Distances between \strong{all} convex-hull vertex pairs are evaluated with
+\code{terra::distance()} using the selected \code{method}, so the returned
+pair is the true geodesic maximum (hulls are small, so the exhaustive
+search is cheap). An earlier rotating-calipers implementation searched
+antipodal pairs in planar coordinate space, which could miss the geodesic
+maximum on lon/lat data.
 
 \strong{Tie-breaking & Point Ordering:}
 If multiple antipodal pairs share the maximum distance, ties are broken by selecting the

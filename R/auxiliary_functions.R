@@ -1,7 +1,9 @@
 # Prepare polygon input for downstream metrics.
 # Main options: set isHull = TRUE to reuse a precomputed hull; method controls
 # whether hulls are reprojected to lon/lat for geodesic distance calculations.
-.prepare_metric_input <- function(v, isHull = FALSE, method = "geo") {
+# build_hull = FALSE skips hull construction (e.g. by_feature loops, where the
+# whole-set hull would be computed and discarded).
+.prepare_metric_input <- function(v, isHull = FALSE, method = "geo", build_hull = TRUE) {
 
   isSf <- inherits(v, "sf")
   if (isSf) {
@@ -15,6 +17,13 @@
     )
   }
 
+  if (nrow(v) == 0L) {
+    cli::cli_abort(
+      "{.arg v} must contain at least one feature.",
+      call = rlang::caller_env()
+    )
+  }
+
   geom_type <- unique(tolower(as.character(terra::geomtype(v))))
   if (!all(geom_type %in% "polygons")) {
     cli::cli_abort(
@@ -23,9 +32,19 @@
     )
   }
 
-  hull <- if (isHull) v else terra::hull(v, type = "convex")
-  if (method %in% c("geo", "haversine") && !terra::is.lonlat(hull)) {
-    hull <- terra::project(hull, "EPSG:4326")
+  if (any(!terra::is.valid(v))) {
+    cli::cli_warn(
+      "{.arg v} contains invalid geometries; metrics may be unreliable.",
+      call = rlang::caller_env()
+    )
+  }
+
+  hull <- NULL
+  if (build_hull) {
+    hull <- if (isHull) v else terra::hull(v, type = "convex")
+    if (method %in% c("geo", "haversine") && !terra::is.lonlat(hull)) {
+      hull <- terra::project(hull, "EPSG:4326")
+    }
   }
 
   list(v = v, hull = hull, isSf = isSf)
@@ -114,74 +133,28 @@
   xy
 }
 
-# Enumerate antipodal hull-vertex pairs for maximum-distance searches.
-# Main options: tol controls how ties are treated when successive triangle
-# areas are numerically equal during the rotating-calipers sweep.
-.find_antipodal_pairs <- function(coords, tol = 1e-12) {
-  n <- nrow(coords)
-  if (n <= 1L) {
-    return(matrix(c(1L, 1L), ncol = 2))
+# Local Lambert azimuthal equal-area CRS (metres) centred on a feature.
+# Used to run planar GEOS hull minimization in a space that is locally
+# distance- and area-faithful instead of in raw lon/lat degrees.
+.local_planar_crs <- function(v) {
+  ctr <- terra::crds(terra::centroids(v))
+  sprintf(
+    "+proj=laea +lon_0=%.10f +lat_0=%.10f +datum=WGS84 +units=m +no_defs",
+    ctr[1], ctr[2]
+  )
+}
+
+# Compute a GEOS hull (e.g. "circle", "rectangle") in a local planar CRS for
+# lon/lat input, then project it back to the input CRS. Projected input is
+# handled directly in its own CRS.
+.local_hull <- function(v, type) {
+  if (terra::is.lonlat(v)) {
+    crs_local <- .local_planar_crs(v)
+    hull_local <- terra::hull(terra::project(v, crs_local), type = type)
+    terra::project(hull_local, terra::crs(v))
+  } else {
+    terra::hull(v, type = type)
   }
-  if (n == 2L) {
-    return(matrix(c(1L, 2L), ncol = 2))
-  }
-
-  # Wrap vertex indexes to keep calipers moving around the closed hull.
-  idx <- function(k) ((k - 1L) %% n) + 1L
-
-  # Compare triangle areas to decide when an antipodal partner advances.
-  tri_area2 <- function(i, j, k) {
-    a <- coords[i, ]
-    b <- coords[j, ]
-    c <- coords[k, ]
-    abs((b[1] - a[1]) * (c[2] - a[2]) - (b[2] - a[2]) * (c[1] - a[1]))
-  }
-
-  j <- 2L
-  while (tri_area2(n, 1L, idx(j + 1L)) > tri_area2(n, 1L, j) + tol) {
-    j <- idx(j + 1L)
-  }
-
-  pairs_list <- vector("list", n * 2L)
-  k <- 0L
-
-  add_pair <- function(a, b) {
-    if (k >= length(pairs_list)) {
-      pairs_list <<- c(pairs_list, vector("list", length(pairs_list)))
-    }
-    k <<- k + 1L
-    pairs_list[[k]] <<- c(as.integer(a), as.integer(b))
-  }
-
-  for (i in seq_len(n)) {
-    i_next <- idx(i + 1L)
-    add_pair(i, j)
-
-    repeat {
-      j_next <- idx(j + 1L)
-      area_current <- tri_area2(i, i_next, j)
-      area_next <- tri_area2(i, i_next, j_next)
-
-      if (area_next > area_current + tol) {
-        j <- j_next
-        add_pair(i, j)
-      } else {
-        if (abs(area_next - area_current) <= tol) {
-          add_pair(i, j_next)
-        }
-        break
-      }
-    }
-  }
-
-  if (k == 0L) {
-    return(matrix(c(1L, 2L), ncol = 2))
-  }
-
-  pairs <- do.call(rbind, pairs_list[seq_len(k)])
-
-  pairs <- t(apply(pairs, 1, function(p) sort(as.integer(p))))
-  unique(pairs)
 }
 
 # Compute east-west and north-south extents from hull bounding-box corners.
@@ -201,6 +174,15 @@
   }
 
   b <- terra::ext(hull)
+  if (terra::is.lonlat(hull) && (b$xmax - b$xmin) > 180) {
+    cli::cli_warn(
+      c(
+        "Hull longitude span exceeds 180 degrees; it may cross the antimeridian.",
+        "i" = "Extent is computed from the raw bounding box and is unreliable across the antimeridian."
+      ),
+      call = rlang::caller_env()
+    )
+  }
   crs_hull <- terra::crs(hull)
   pt_sw <- terra::vect(cbind(b$xmin, b$ymin), crs = crs_hull)
   pt_se <- terra::vect(cbind(b$xmax, b$ymin), crs = crs_hull)
@@ -346,7 +328,7 @@
   )
   need_mincircle <- "reock" %in% metrics_to_calc
   need_inh <- any(
-    c("num_holes", "hole_area", "hole_area_pct") %in% metrics_to_calc
+    c("hole_area", "hole_area_pct") %in% metrics_to_calc
   )
   need_pols <- "num_polygons" %in% metrics_to_calc
 
@@ -374,11 +356,17 @@
   centroid <- NULL
   if (need_centroid) {
     centroid <- terra::centroids(v)
+    # decimallongitude/decimallatitude must always be in degrees
+    if (!terra::is.lonlat(centroid)) {
+      centroid <- terra::project(centroid, "EPSG:4326")
+    }
   }
 
   mincircle <- NULL
   if (need_mincircle) {
-    mincircle <- terra::hull(v, type = "circle")
+    # Minimizing in lon/lat degrees distorts the circle at high latitudes;
+    # minimize in a local equal-area projection and project the result back.
+    mincircle <- .local_hull(v, type = "circle")
   }
 
   inh <- NULL
@@ -395,7 +383,9 @@
 
   area_val <- NULL
   if (need_area) {
-    area_val <- terra::expanse(v, unit = "m", transform = transform_v)
+    # v is already lon/lat when transform_v is TRUE, so no transform argument
+    # is needed: expanse() is geodesic on lon/lat and Cartesian otherwise.
+    area_val <- terra::expanse(v, unit = "m")
   }
 
   perimeter_val <- NULL
@@ -423,11 +413,7 @@
 
   hole_area_val <- NULL
   if (need_hole_area) {
-    hole_area_val <- sum(terra::expanse(
-      inh,
-      unit = "m",
-      transform = transform_v
-    ))
+    hole_area_val <- sum(terra::expanse(inh, unit = "m"))
   }
 
   # --- Assign requested metrics to the output ---
@@ -445,8 +431,7 @@
   }
 
   if ("reock" %in% metrics_to_calc) {
-    v$reock <- area_val /
-      terra::expanse(mincircle, unit = "m", transform = transform_v)
+    v$reock <- area_val / terra::expanse(mincircle, unit = "m")
   }
 
   if ("elongation_rectangle" %in% metrics_to_calc) {
@@ -460,7 +445,12 @@
   }
 
   if ("num_holes" %in% metrics_to_calc) {
-    v$num_holes <- length(inh)
+    # Count interior rings from the geometry dump rather than relying on how
+    # fillHoles(inverse = TRUE) packs features. Hole numbering can restart
+    # per part, so count unique (part, hole) combinations.
+    geom_mat <- terra::geom(v)
+    hole_rows <- geom_mat[geom_mat[, "hole"] > 0, c("part", "hole"), drop = FALSE]
+    v$num_holes <- nrow(unique(hole_rows))
   }
 
   if ("hole_area" %in% metrics_to_calc) {
@@ -468,11 +458,13 @@
   }
 
   if ("hole_area_pct" %in% metrics_to_calc) {
-    v$hole_area_pct <- (hole_area_val / area_val) * 100
+    # expanse() is net of holes, so add the hole area back to get the gross
+    # area used as the denominator.
+    v$hole_area_pct <- (hole_area_val / (area_val + hole_area_val)) * 100
   }
 
   if ("num_polygons" %in% metrics_to_calc) {
-    v$num_polygons <- length(pols)
+    v$num_polygons <- nrow(pols)
   }
 
   if (any(c("ew_length", "ns_length") %in% metrics_to_calc)) {
@@ -513,7 +505,9 @@
   }
 
   if ("fractaldimension" %in% metrics_to_calc) {
-    v$fractaldimension <- 2 * (log(perimeter_val) / log(area_val))
+    # FRAGSTATS convention: the 0.25 correction adjusts the perimeter for the
+    # raster-origin bias of the index; expect values in [1, 2] for A > 0.
+    v$fractaldimension <- 2 * log(0.25 * perimeter_val) / log(area_val)
   }
 
   if ("sinuosity" %in% metrics_to_calc) {

@@ -149,3 +149,33 @@ test_that("calc_extent by_feature works with isHull = TRUE", {
   expect_equal(nrow(out), 2)
   expect_true(all(c("ew_length", "ns_length") %in% names(out)))
 })
+
+test_that("calc_extent by_feature works with single directions and both outputs", {
+  skip_if_proj_unavailable()
+
+  coords <- cbind(c(0, 0, 1, 1, 0), c(0, 1, 1, 0, 0))
+  pol <- terra::vect(coords, type = "polygon", crs = "EPSG:4326")
+  v2 <- rbind(pol, terra::shift(pol, dx = 5))
+
+  for (dir in c("ew", "ns")) {
+    col <- paste0(dir, "_length")
+
+    vals <- calc_extent(v2, direction = dir, output = "value", by_feature = TRUE)
+    expect_type(vals, "double")
+    expect_length(vals, 2)
+    expect_true(all(vals > 0))
+
+    out <- calc_extent(v2, direction = dir, output = "polygon", by_feature = TRUE)
+    expect_true(methods::is(out, "SpatVector"))
+    expect_equal(nrow(out), 2)
+    expect_true(col %in% names(out))
+    expect_true(all(out[[col]][[1]] > 0))
+
+    # Per-feature values must match feature-by-feature calls
+    single <- vapply(seq_len(2), function(i) {
+      calc_extent(v2[i, ], direction = dir, output = "value")
+    }, numeric(1))
+    expect_equal(vals, single)
+    expect_equal(out[[col]][[1]], single)
+  }
+})

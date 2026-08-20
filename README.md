@@ -2,6 +2,8 @@
 
 <!-- badges: start -->
 
+[![R-CMD-check](https://github.com/gortegasolis/geomattR/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/gortegasolis/geomattR/actions/workflows/R-CMD-check.yaml)
+[![Codecov test coverage](https://codecov.io/gh/gortegasolis/geomattR/graph/badge.svg)](https://app.codecov.io/gh/gortegasolis/geomattR)
 <!-- badges: end -->
 
 ## Overview
@@ -56,7 +58,7 @@ result_subset <- calculate_geometric_attributes(
 -   **area**: Total area in square meters.
 -   **perimeter**: Total perimeter length in meters.
 -   **hole_area**: Total area of interior holes in square meters.
--   **hole_area_pct**: Percentage of polygon occupied by holes: $HA\% = \frac{\text{hole\_area}}{\text{area}} \times 100$.
+-   **hole_area_pct**: Percentage of the gross polygon area (including holes) occupied by holes: $HA\% = \frac{\text{hole\_area}}{\text{area} + \text{hole\_area}} \times 100$.
 
 #### Shape Metrics
 
@@ -65,12 +67,12 @@ result_subset <- calculate_geometric_attributes(
 -   **elongation_rectangle**: Elongation index from the minimum bounding rectangle of the convex hull. In the current implementation, it is computed as the mean of the two largest side lengths divided by the mean of the two shortest side lengths: $E = \frac{\text{mean}(\text{long sides})}{\text{mean}(\text{short sides})}$.
 -   **shape_index**: Dimensionless irregularity index comparing polygon perimeter to the perimeter of a circle with the same area: $SI = \frac{P}{2\sqrt{\pi A}}$. A value of 1 corresponds to a perfect circle; larger values indicate increasing irregularity.
 -   **circularity_ratio**: Circularity index based on area and maximum hull distance: $CR = \frac{4A}{\pi L_{\max}^2}$.
--   **fractaldimension**: Perimeter-area scaling proxy for boundary complexity: $D = \frac{2\ln(P)}{\ln(A)}$.
+-   **fractaldimension**: Perimeter-area scaling index of boundary complexity following the FRAGSTATS convention: $D = \frac{2\ln(0.25P)}{\ln(A)}$. Approaches 1 for simple (square-like) shapes and 2 for highly convoluted boundaries.
 
 #### Orientation Metrics
 
--   **bearing**: Geographic bearing of the maximum length line from southernmost to northernmost point in decimal degrees ($0^{\circ}$ to $360^{\circ}$).
--   **northerness**: Cosine of bearing: $N = \cos(\text{bearing} \times \frac{\pi}{180})$ (ranges from -1 to 1).
+-   **bearing**: Axial orientation of the maximum length line, measured as the geographic bearing from the southernmost to the northernmost point, in decimal degrees ($-90^{\circ}$ to $90^{\circ}$). Because the line is always oriented south-to-north, it describes the orientation of an *axis*, not a travel direction: $-90^{\circ}$/ $90^{\circ}$ is east-west, $0^{\circ}$ is north-south.
+-   **northerness**: Cosine of bearing: $N = \cos(\text{bearing} \times \frac{\pi}{180})$ (ranges from 0 to 1; 1 = north-south axis, 0 = east-west axis).
 -   **ew_length**: Average east-west extent in meters: $EW = \frac{d(NW, NE) + d(SW, SE)}{2}$.
 -   **ns_length**: Average north-south extent in meters: $NS = \frac{d(SW, NW) + d(SE, NE)}{2}$.
 -   **maxlength**: Maximum distance across the convex hull: $L_{\max} = \max_{p_i, p_j} d(p_i, p_j)$.
@@ -85,7 +87,7 @@ result_subset <- calculate_geometric_attributes(
 
 ### Geodesic Calculations
 
-`geomattR` prioritizes geodesic calculations by default (`method = "geo"`), which makes the metrics suitable for continental or global scale studies. `haversine` and `cosine` are also supported for faster approximations or planar CRS. For methods that need geographic coordinates, the package will transform the geometry to WGS84 internally and then restore the output geometry to the original CRS when applicable.
+`geomattR` prioritizes geodesic calculations by default (`method = "geo"`), which makes the metrics suitable for continental or global scale studies. `haversine` and `cosine` are also supported as faster (but less precise) great-circle approximations. All three methods are lon/lat great-circle methods; if the input has a projected CRS, `terra::distance()` ignores `method` and computes Cartesian distances instead. For methods that need geographic coordinates, the package will transform the geometry to WGS84 internally and then restore the output geometry to the original CRS when applicable.
 
 Area, perimeter, extent, maximum distance, and bearing are computed according to the selected method. Derived shape indices (for example compactness, sinuosity, and fractaldimension) are calculated from those base quantities. For details on the methods `geo`, `haversine` and `cosine`, please refer to the documentation of the [`terra`](https://rspatial.github.io/terra/reference/distance.html) package.
 

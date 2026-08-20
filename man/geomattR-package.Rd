@@ -38,7 +38,9 @@ All calculations prioritize accuracy:
 \itemize{
 \item \strong{Area & Perimeter}: Geodesic by default; projected input is handled
 transparently for methods that need geographic coordinates
-\item \strong{Distances}: Support \code{method = "geo"}, \code{"haversine"}, and \code{"cosine"}
+\item \strong{Distances}: Support \code{method = "geo"}, \code{"haversine"}, and \code{"cosine"}.
+All three are lon/lat great-circle methods; on a projected CRS,
+\code{terra::distance()} ignores \code{method} and computes Cartesian distances
 \item \strong{Bearing}: Computed from geographic coordinates when needed
 \item \strong{Automatic Projection}: Non-geographic CRS are handled transparently
 }
@@ -79,7 +81,7 @@ Useful links:
 
 }
 \author{
-\strong{Maintainer}: Gabriel Ortega-Solís \email{g.ortega.solis@gmail.com} (\href{https://orcid.org/0000-0002-0516-5694}{ORCID}) [copyright holder]
+\strong{Maintainer}: Gabriel Ortega-Solís \email{g.ortega.solis@geomattr.org} (\href{https://orcid.org/0000-0002-0516-5694}{ORCID}) [copyright holder]
 
 }
 \keyword{internal}

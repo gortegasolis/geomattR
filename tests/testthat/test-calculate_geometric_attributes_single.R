@@ -123,9 +123,10 @@ test_that(".calculate_geometric_attributes_single computes valid bearing", {
 
   result <- .calculate_geometric_attributes_single(pol, metrics = "bearing")
 
-  # Bearing should be between 0 and 360 degrees (or handle negative values)
+  # Bearing is an axial orientation measured south -> north, so it must lie
+  # within [-90, 90].
   expect_true(!is.na(result$bearing))
-  expect_true(result$bearing >= -180 & result$bearing <= 360)
+  expect_true(result$bearing >= -90 & result$bearing <= 90)
 })
 
 test_that(".calculate_geometric_attributes_single computes valid northerness", {
@@ -137,8 +138,8 @@ test_that(".calculate_geometric_attributes_single computes valid northerness", {
     metrics = c("bearing", "northerness")
   )
 
-  # Northerness should be between -1 and 1
-  expect_true(result$northerness >= -1)
+  # Bearing is confined to [-90, 90], so northerness = cos(bearing) is in [0, 1].
+  expect_true(result$northerness >= 0)
   expect_true(result$northerness <= 1)
 })
 
@@ -154,4 +155,70 @@ test_that(".calculate_geometric_attributes_single computes valid centroid", {
   # Centroid should be within bounds
   expect_true(result$decimallongitude >= 0 & result$decimallongitude <= 1)
   expect_true(result$decimallatitude >= 0 & result$decimallatitude <= 1)
+})
+
+test_that(".calculate_geometric_attributes_single returns degree centroid on projected CRS", {
+  # 1000 m square in Web Mercator (metres)
+  pol <- terra::vect(
+    cbind(c(0, 0, 1000, 1000, 0), c(0, 1000, 1000, 0, 0)),
+    type = "polygon",
+    crs = "EPSG:3857"
+  )
+
+  result <- .calculate_geometric_attributes_single(
+    pol,
+    metrics = c("decimallongitude", "decimallatitude"),
+    method = "cosine"
+  )
+
+  # Must be degrees, not metres
+  expect_true(abs(result$decimallongitude) <= 180)
+  expect_true(abs(result$decimallatitude) <= 90)
+  expect_gt(result$decimallongitude, 0)
+  expect_gt(result$decimallatitude, 0)
+})
+
+test_that("fractaldimension follows the FRAGSTATS convention", {
+  coords <- cbind(c(0, 0, 1, 1, 0), c(0, 1, 1, 0, 0))
+  pol <- terra::vect(coords, type = "polygon", crs = "EPSG:4326")
+
+  result <- .calculate_geometric_attributes_single(
+    pol,
+    metrics = c("area", "perimeter", "fractaldimension")
+  )
+
+  expected <- 2 * log(0.25 * result$perimeter) / log(result$area)
+  expect_equal(as.numeric(result$fractaldimension), as.numeric(expected))
+  # A square should give D ~= 1 (geodesic P/A make it slightly inexact)
+  expect_equal(as.numeric(result$fractaldimension), 1, tolerance = 1e-3)
+})
+
+test_that("hole_area_pct uses gross area as denominator", {
+  # 4x4 square with a 2x2 hole: hole = 1/4 of gross area
+  pol <- terra::vect(
+    "POLYGON ((0 0, 0 4, 4 4, 4 0, 0 0), (1 1, 1 3, 3 3, 3 1, 1 1))",
+    crs = "EPSG:4326"
+  )
+
+  result <- .calculate_geometric_attributes_single(
+    pol,
+    metrics = c("area", "hole_area", "hole_area_pct", "num_holes")
+  )
+
+  expect_equal(as.numeric(result$num_holes), 1)
+  expected_pct <- 100 * result$hole_area / (result$area + result$hole_area)
+  expect_equal(as.numeric(result$hole_area_pct), as.numeric(expected_pct))
+  # Gross-area denominator must differ from the old net-area one
+  old_pct <- 100 * result$hole_area / result$area
+  expect_gt(abs(result$hole_area_pct - old_pct), 1e-6)
+})
+
+test_that(".prepare_metric_input rejects empty input", {
+  coords <- cbind(c(0, 0, 1, 1, 0), c(0, 1, 1, 0, 0))
+  pol <- terra::vect(coords, type = "polygon", crs = "EPSG:4326")
+
+  expect_error(
+    .prepare_metric_input(pol[0, ]),
+    "at least one feature"
+  )
 })

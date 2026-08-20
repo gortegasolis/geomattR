@@ -9,6 +9,12 @@
 #' of the two largest side lengths to the mean of the two shortest side lengths:
 #' \eqn{E = \frac{\text{mean}(\text{long sides})}{\text{mean}(\text{short sides})}}
 #'
+#' The minimum bounding rectangle is a planar (GEOS) construction. For lon/lat
+#' input it is computed in a local Lambert azimuthal equal-area projection
+#' centred on the feature, so that the *minimum* rectangle is not distorted by
+#' the varying length of a degree of longitude; the rectangle is then measured
+#' back in the input's CRS with the selected \code{method}.
+#'
 #' This approximation assumes the minimum bounding rectangle is unique,
 #' which may not always be the case. Consider this with caution.
 #'
@@ -23,8 +29,9 @@
 #'   with \code{elongation_rectangle} added as an attribute.
 #' @param method Character string passed to \code{terra::distance()}.
 #'   Defaults to \code{"geo"} (recommended). Other supported options are
-#'   \code{"haversine"} and \code{"cosine"}. See \code{\link[terra]{distance}}
-#'   for more information.
+#'   \code{"haversine"} and \code{"cosine"}. All three are lon/lat great-circle
+#'   methods; on a projected CRS, \code{method} is ignored and distances are
+#'   Cartesian. See \code{\link[terra]{distance}} for more information.
 #' @param by_feature Logical. If \code{FALSE} (default), compute a single
 #'   response from the convex hull of the whole input set. If \code{TRUE},
 #'   compute one response per polygon feature.
@@ -61,7 +68,7 @@ calc_elongation <- function(v, isHull = FALSE, output = "value", method = "geo",
   }
 
   if (by_feature) {
-    prep_all <- .prepare_metric_input(v = v, isHull = isHull, method = method)
+    prep_all <- .prepare_metric_input(v = v, isHull = isHull, method = method, build_hull = FALSE)
     n <- nrow(prep_all$v)
     per_values <- vapply(seq_len(n), function(i) {
       calc_elongation(
@@ -91,17 +98,45 @@ calc_elongation <- function(v, isHull = FALSE, output = "value", method = "geo",
   prep <- .prepare_metric_input(v = v, isHull = isHull, method = method)
   hull <- prep$hull
 
-  minRectangle <- terra::hull(hull, type = "rectangle")
-  dims_rect <- terra::crds(minRectangle)
-  dims_rect <- terra::vect(dims_rect, crs = terra::crs(hull))
+  # Minimize the bounding rectangle in a local planar CRS (GEOS hulls are
+  # planar; in lon/lat degrees the minimum would be distorted by latitude),
+  # then measure its edges back in the hull's CRS with the selected method.
+  minRectangle <- .local_hull(hull, type = "rectangle")
+  rect_coords <- terra::crds(minRectangle)
 
-  dists_rect <- terra::distance(dims_rect, method = method)
-  dists_rect <- sort(dists_rect, decreasing = TRUE)
-  major <- mean(dists_rect[4:5])
-  dists_rect <- sort(dists_rect, decreasing = FALSE)
-  minor <- mean(dists_rect[2:3])
+  # Keep the unique corners in ring order (crds() repeats the closing vertex).
+  corner_keep <- !duplicated(rect_coords, MARGIN = 1)
+  rect_coords <- rect_coords[corner_keep, , drop = FALSE]
 
-  value <- c(elongation_rectangle = major / minor)
+  n_corners <- nrow(rect_coords)
+  if (n_corners < 3L) {
+    # Degenerate rectangle (point or line): minor axis is zero.
+    return(.return_metric_output(
+      v = prep$v,
+      isSf = prep$isSf,
+      output = output,
+      values = c(elongation_rectangle = Inf)
+    ))
+  }
+
+  # Explicitly measure the ring edges instead of slicing sorted pairwise
+  # distances.
+  rect_pts <- terra::vect(rect_coords, crs = terra::crs(hull))
+  next_idx <- c(2:n_corners, 1L)
+  edges <- vapply(seq_len(n_corners), function(i) {
+    as.numeric(terra::distance(rect_pts[i, ], rect_pts[next_idx[i], ], method = method))
+  }, numeric(1))
+
+  edges <- sort(edges, decreasing = TRUE)
+  half <- length(edges) %/% 2L
+  major <- mean(edges[seq_len(half)])
+  minor <- mean(edges[(half + 1L):length(edges)])
+
+  if (!is.finite(minor) || minor <= 0) {
+    value <- c(elongation_rectangle = Inf)
+  } else {
+    value <- c(elongation_rectangle = major / minor)
+  }
 
   .return_metric_output(
     v = prep$v,

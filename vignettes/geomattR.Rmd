@@ -83,7 +83,7 @@ polygon_with_shape <- calculate_geometric_attributes(
     "shape_index", # Dimensionless shape complexity
     "circularity_ratio", # Based on max length
     "fractaldimension", # Boundary complexity
-    "elongation_rectangle" # mean(long sides) / mean(0, short side) from the minimum bounding rectangle
+    "elongation_rectangle" # mean(long sides) / mean(short sides) from the minimum bounding rectangle
   )
 )
 
@@ -101,10 +101,11 @@ polygon_with_orient <- calculate_geometric_attributes(
   metrics = c("bearing", "northerness", "ew_length", "ns_length", "maxlength")
 )
 
-# Bearing: geographic direction of maximum length (south to north)
+# Bearing: axial orientation of the maximum length line, always measured
+# south to north, so it lies within [-90, 90] (0 = N-S axis, -90/90 = E-W axis)
 print(polygon_with_orient$bearing)
 
-# Northerness: cosine of bearing (-1=south, 0=east/west, 1=north)
+# Northerness: cosine of bearing (0 = E-W axis, 1 = N-S axis)
 print(polygon_with_orient$northerness)
 
 # Extents in meters: maximum distances from East to West and North to South
@@ -123,7 +124,8 @@ polygon_with_complexity <- calculate_geometric_attributes(
 # Sinuosity: perimeter / max_length (>1 indicates rougher boundary)
 print(polygon_with_complexity$sinuosity)
 
-# Fractal dimension: measures boundary complexity (1-2)
+# Fractal dimension (FRAGSTATS convention): boundary complexity, approaching
+# 1 for simple square-like shapes and 2 for highly convoluted boundaries
 print(polygon_with_complexity$fractaldimension)
 ```
 

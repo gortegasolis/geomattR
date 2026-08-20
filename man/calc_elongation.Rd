@@ -24,8 +24,9 @@ with \code{elongation_rectangle} added as an attribute.}
 
 \item{method}{Character string passed to \code{terra::distance()}.
 Defaults to \code{"geo"} (recommended). Other supported options are
-\code{"haversine"} and \code{"cosine"}. See \code{\link[terra]{distance}}
-for more information.}
+\code{"haversine"} and \code{"cosine"}. All three are lon/lat great-circle
+methods; on a projected CRS, \code{method} is ignored and distances are
+Cartesian. See \code{\link[terra]{distance}} for more information.}
 
 \item{by_feature}{Logical. If \code{FALSE} (default), compute a single
 response from the convex hull of the whole input set. If \code{TRUE},
@@ -49,6 +50,12 @@ the input polygon.
 In the current implementation, elongation is computed as the ratio of the mean
 of the two largest side lengths to the mean of the two shortest side lengths:
 \eqn{E = \frac{\text{mean}(\text{long sides})}{\text{mean}(\text{short sides})}}
+
+The minimum bounding rectangle is a planar (GEOS) construction. For lon/lat
+input it is computed in a local Lambert azimuthal equal-area projection
+centred on the feature, so that the \emph{minimum} rectangle is not distorted by
+the varying length of a degree of longitude; the rectangle is then measured
+back in the input's CRS with the selected \code{method}.
 
 This approximation assumes the minimum bounding rectangle is unique,
 which may not always be the case. Consider this with caution.

@@ -30,7 +30,9 @@
 #'
 #' - **Area & Perimeter**: Geodesic by default; projected input is handled
 #'   transparently for methods that need geographic coordinates
-#' - **Distances**: Support `method = "geo"`, `"haversine"`, and `"cosine"`
+#' - **Distances**: Support `method = "geo"`, `"haversine"`, and `"cosine"`.
+#'   All three are lon/lat great-circle methods; on a projected CRS,
+#'   `terra::distance()` ignores `method` and computes Cartesian distances
 #' - **Bearing**: Computed from geographic coordinates when needed
 #' - **Automatic Projection**: Non-geographic CRS are handled transparently
 #'
@@ -60,8 +62,10 @@
 #' parallel::stopCluster(cl)
 #' ```
 #'
-#' @import terra
-#' @import methods
+#' @importFrom terra aggregate centroids crds crs disagg distance expanse ext
+#'   fillHoles geom geomtype hull is.lonlat is.valid perim project subset
+#'   unwrap vect wrap
+#' @importFrom methods is
 #' @importFrom geosphere bearing
 #'
 #' @keywords internal

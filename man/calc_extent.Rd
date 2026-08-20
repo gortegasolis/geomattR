@@ -31,8 +31,9 @@ requested extent columns added.}
 
 \item{method}{Character string passed to \code{terra::distance()}.
 Defaults to \code{"geo"} (recommended). Other supported options are
-\code{"haversine"} and \code{"cosine"}. See \code{\link[terra]{distance}}
-for more information.}
+\code{"haversine"} and \code{"cosine"}. All three are lon/lat great-circle
+methods; on a projected CRS, \code{method} is ignored and distances are
+Cartesian. See \code{\link[terra]{distance}} for more information.}
 
 \item{by_feature}{Logical. If \code{FALSE} (default), compute a single
 response from the convex hull of the whole input set. If \code{TRUE},

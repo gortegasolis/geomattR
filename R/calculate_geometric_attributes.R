@@ -22,7 +22,11 @@
 #'   \code{NULL} (default). When \code{NULL} features are processed sequentially.
 #'   Passing a cluster enables parallel processing across the cluster workers.
 #' 
-#' @param method Character string specifying the method for calculations.
+#' @param method Character string passed to \code{terra::distance()} for
+#'   distance-based metrics. One of \code{"geo"} (default, recommended),
+#'   \code{"haversine"}, or \code{"cosine"}. All three are lon/lat great-circle
+#'   methods; on a projected CRS, \code{method} is ignored and distances are
+#'   Cartesian.
 #' @param by_feature Logical. If \code{TRUE} (default), compute metrics for each
 #'   feature independently. If \code{FALSE}, non-spatial columns are dropped,
 #'   features are dissolved into a single geometry, and one set of metrics is
@@ -44,9 +48,9 @@
 #'     \item \code{ew_length}: East-west extent in meters.
 #'     \item \code{ns_length}: North-south extent in meters.
 #'     \item \code{maxlength}: Maximum Feret distance across the convex hull.
-#'     \item \code{bearing}: Geographic bearing of the maximum length line from southernmost to northernmost point in decimal degrees.
-#'     \item \code{northerness}: Northerness component of bearing.
-#'     \item \code{fractaldimension}: Boundary complexity index.
+#'     \item \code{bearing}: Axial orientation of the maximum length line: geographic bearing from the southernmost to the northernmost point in decimal degrees, within \[-90, 90\] (0 = north-south, -90/90 = east-west).
+#'     \item \code{northerness}: Cosine of bearing, within \[0, 1\] (1 = north-south axis, 0 = east-west axis).
+#'     \item \code{fractaldimension}: Boundary complexity index (FRAGSTATS convention).
 #'     \item \code{sinuosity}: Perimeter-to-maximum-length ratio.
 #'     \item \code{shape_index}: Dimensionless irregularity index.
 #'     \item \code{circularity_ratio}: Circularity index based on area and
@@ -72,8 +76,10 @@
 #' }
 #'
 #' \strong{Geodesic Measurements:}
-#' The function supports the methods \code{"geo"} (default), \code{"haversine"} (less precise but fast 
-#' alternative to `geo`), and \code{"cosine"} (for planar CRS).
+#' The function supports the methods \code{"geo"} (default), \code{"haversine"}
+#' and \code{"cosine"} (less precise but faster great-circle approximations).
+#' All three are lon/lat great-circle methods in \code{terra::distance()}; on a
+#' projected CRS \code{method} is ignored and distances are Cartesian.
 #' Inputs are internally projected to EPSG:4326 when a metric requires
 #' geographic coordinates and restored to the original CRS on return when
 #' applicable.
@@ -105,13 +111,17 @@
 #'     to a circle:
 #'     \eqn{C = \frac{4\pi A}{P^2}}{C = (4 * pi * A) / P^2}.
 #'   \item Reock compactness:
-#'     \eqn{R = \frac{A}{A_{MEC}}}{R = A / A_MEC}.
+#'     \eqn{R = \frac{A}{A_{MEC}}}{R = A / A_MEC}. The minimum enclosing circle
+#'     is computed in a local Lambert azimuthal equal-area projection centred
+#'     on the feature (GEOS hulls are planar), then measured back in the
+#'     input's CRS.
 #'   \item Shape index (perimeter relative to a circle of equal area):
 #'     \eqn{SI = \frac{P}{2\sqrt{\pi A}}}{SI = P / (2 * sqrt(pi * A))}.
 #'   \item Circularity ratio:
 #'     \eqn{CR = \frac{4A}{\pi L_{\max}^2}}{CR = (4 * A) / (pi * L_max^2)}.
-#'   \item Fractal dimension:
-#'     \eqn{D = 2 \times \frac{\ln(P)}{\ln(A)}}{D = 2 * log(P) / log(A)}.
+#'   \item Fractal dimension (FRAGSTATS convention; approaches 1 for simple,
+#'     square-like shapes and 2 for highly convoluted boundaries):
+#'     \eqn{D = \frac{2 \ln(0.25 P)}{\ln(A)}}{D = 2 * log(0.25 * P) / log(A)}.
 #'   \item Sinuosity:
 #'     \eqn{S = \frac{P}{L_{\max}}}{S = P / L_max}.
 #' }
@@ -130,8 +140,8 @@
 #'
 #' \strong{Hole and part metrics:}
 #' \itemize{
-#'   \item Hole area percentage:
-#'     \eqn{HA\% = \frac{A_{\text{holes}}}{A} \times 100}{HA\% = (A_holes / A) * 100}.
+#'   \item Hole area percentage, relative to the gross area (including holes):
+#'     \eqn{HA\% = \frac{A_{\text{holes}}}{A + A_{\text{holes}}} \times 100}{HA\% = (A_holes / (A + A_holes)) * 100}.
 #'   \item \code{num_holes}, \code{hole_area}, and \code{num_polygons} are direct
 #'     counts/areas derived from polygon topology.
 #' }
@@ -141,7 +151,9 @@
 #' Reock, E. C. (1961). Measuring compactness as a requirement of legislative apportionment. \emph{Midwest Journal of Political Science}, 5(1), 70-74. \doi{10.2307/2109043}
 #'
 #' Dražić, Slobodan, Nebojša Ralević, and Joviša Žunić. Shape Elongation from Optimal Encasing Rectangles. \emph{Computers & Mathematics with Applications 60, no. 7 (2010): 2035–42}. \doi{10.1016/j.camwa.2010.07.043}.
-#' 
+#'
+#' McGarigal, K., and B. J. Marks. FRAGSTATS: Spatial Pattern Analysis Program for Quantifying Landscape Structure. \emph{Gen. Tech. Rep. PNW-GTR-351}. Portland, OR: USDA Forest Service, Pacific Northwest Research Station (1995). \doi{10.2737/PNW-GTR-351}
+#'
 #' @export
 #'
 #' @examples
@@ -180,8 +192,8 @@ calculate_geometric_attributes <- function(v, metrics = "all", cl = NULL, method
       "{.arg by_feature} is {.val FALSE}.",
       "i" = "Non-spatial columns will be dropped and features dissolved into a single geometry."
     ))
-    v <- subset(v, subset = TRUE, select = NULL)
-    v <- aggregate(v, by = NULL, dissolve = TRUE)
+    v <- terra::subset(v, subset = TRUE, select = NULL)
+    v <- terra::aggregate(v, by = NULL, dissolve = TRUE)
   }
 
   n_features <- nrow(v)
@@ -189,6 +201,39 @@ calculate_geometric_attributes <- function(v, metrics = "all", cl = NULL, method
   # Single feature: process directly
   if (n_features == 1L) {
     return(.calculate_geometric_attributes_single(v, metrics = metrics, method = method))
+  }
+
+  # Fast path: when only simple metrics are requested, terra's vectorised
+  # methods handle all features in one call instead of a per-feature loop.
+  simple_metrics <- c("area", "perimeter", "decimallongitude", "decimallatitude")
+  if (by_feature && is.null(cl) && is.character(metrics) &&
+    !("all" %in% metrics) && all(metrics %in% simple_metrics)) {
+    vv <- v
+    if (method %in% c("geo", "haversine") && !terra::is.lonlat(vv)) {
+      vv <- terra::project(vv, "EPSG:4326")
+    }
+
+    if ("area" %in% metrics) {
+      # Geodesic on lon/lat, Cartesian on projected CRS (as documented).
+      v$area <- terra::expanse(vv, unit = "m")
+    }
+    if ("perimeter" %in% metrics) {
+      v$perimeter <- terra::perim(vv)
+    }
+    if (any(c("decimallongitude", "decimallatitude") %in% metrics)) {
+      ctr <- terra::centroids(vv)
+      if (!terra::is.lonlat(ctr)) {
+        ctr <- terra::project(ctr, "EPSG:4326")
+      }
+      ctr_crds <- terra::crds(ctr)
+      if ("decimallongitude" %in% metrics) {
+        v$decimallongitude <- ctr_crds[, 1]
+      }
+      if ("decimallatitude" %in% metrics) {
+        v$decimallatitude <- ctr_crds[, 2]
+      }
+    }
+    return(v)
   }
 
   # Split the SpatVector into individual features
