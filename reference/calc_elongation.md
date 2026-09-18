@@ -89,7 +89,7 @@ Applications 60, no. 7 (2010): 2035–42*.
 
 ``` r
 library(terra)
-#> terra 1.9.34
+#> terra 1.9.50
 coords <- cbind(c(0, 0, 1, 1, 0), c(0, 1, 1, 0, 0))
 polygon <- vect(coords, type = "polygon", crs = "EPSG:4326")
 elongation <- calc_elongation(polygon)
