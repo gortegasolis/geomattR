@@ -2,8 +2,8 @@
 
 <!-- badges: start -->
 
-[![R-CMD-check](https://github.com/gortegasolis/geomattR/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/gortegasolis/geomattR/actions/workflows/R-CMD-check.yaml)
-[![Codecov test coverage](https://codecov.io/gh/gortegasolis/geomattR/graph/badge.svg)](https://app.codecov.io/gh/gortegasolis/geomattR)
+[![R-CMD-check](https://github.com/gortegasolis/geomattR/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/gortegasolis/geomattR/actions/workflows/R-CMD-check.yaml) [![Codecov test coverage](https://codecov.io/gh/gortegasolis/geomattR/graph/badge.svg)](https://app.codecov.io/gh/gortegasolis/geomattR)
+
 <!-- badges: end -->
 
 ## Overview
@@ -55,35 +55,35 @@ result_subset <- calculate_geometric_attributes(
 
 #### Size Metrics
 
--   **area**: Total area in square meters.
--   **perimeter**: Total perimeter length in meters.
--   **hole_area**: Total area of interior holes in square meters.
--   **hole_area_pct**: Percentage of the gross polygon area (including holes) occupied by holes: $HA\% = \frac{\text{hole\_area}}{\text{area} + \text{hole\_area}} \times 100$.
+- **area**: Total area in square meters.
+- **perimeter**: Total perimeter length in meters.
+- **hole_area**: Total area of interior holes in square meters.
+- **hole_area_pct**: Percentage of the gross polygon area (including holes) occupied by holes: $HA\% = \frac{\text{hole\_area}}{\text{area} + \text{hole\_area}} \times 100$.
 
 #### Shape Metrics
 
--   **compactness**: Polsby-Popper compactness, a circularity index that compares polygon area to the area of a circle with the same perimeter: $C = \frac{4\pi A}{P^2}$. Values closer to 1 indicate more compact (circle-like) shapes.
--   **reock**: Reock compactness, defined as polygon area relative to the area of its minimum enclosing circle: $R = \frac{A}{A_{MEC}}$. Values closer to 1 indicate that the polygon fills its enclosing circle more efficiently.
--   **elongation_rectangle**: Elongation index from the minimum bounding rectangle of the convex hull. In the current implementation, it is computed as the mean of the two largest side lengths divided by the mean of the two shortest side lengths: $E = \frac{\text{mean}(\text{long sides})}{\text{mean}(\text{short sides})}$.
--   **shape_index**: Dimensionless irregularity index comparing polygon perimeter to the perimeter of a circle with the same area: $SI = \frac{P}{2\sqrt{\pi A}}$. A value of 1 corresponds to a perfect circle; larger values indicate increasing irregularity.
--   **circularity_ratio**: Circularity index based on area and maximum hull distance: $CR = \frac{4A}{\pi L_{\max}^2}$.
--   **fractaldimension**: Perimeter-area scaling index of boundary complexity following the FRAGSTATS convention: $D = \frac{2\ln(0.25P)}{\ln(A)}$. Approaches 1 for simple (square-like) shapes and 2 for highly convoluted boundaries.
+- **compactness**: Polsby-Popper compactness, a circularity index that compares polygon area to the area of a circle with the same perimeter: $C = \frac{4\pi A}{P^2}$. Values closer to 1 indicate more compact (circle-like) shapes.
+- **reock**: Reock compactness, defined as polygon area relative to the area of its minimum enclosing circle: $R = \frac{A}{A_{MEC}}$. Values closer to 1 indicate that the polygon fills its enclosing circle more efficiently.
+- **elongation_rectangle**: Elongation index from the minimum bounding rectangle of the convex hull. In the current implementation, it is computed as the mean of the two largest side lengths divided by the mean of the two shortest side lengths: $E = \frac{\text{mean}(\text{long sides})}{\text{mean}(\text{short sides})}$.
+- **shape_index**: Dimensionless irregularity index comparing polygon perimeter to the perimeter of a circle with the same area: $SI = \frac{P}{2\sqrt{\pi A}}$. A value of 1 corresponds to a perfect circle; larger values indicate increasing irregularity.
+- **circularity_ratio**: Circularity index based on area and maximum hull distance: $CR = \frac{4A}{\pi L_{\max}^2}$.
+- **fractaldimension**: Perimeter-area scaling index of boundary complexity following the FRAGSTATS convention: $D = \frac{2\ln(0.25P)}{\ln(A)}$. Approaches 1 for simple (square-like) shapes and 2 for highly convoluted boundaries.
 
 #### Orientation Metrics
 
--   **bearing**: Axial orientation of the maximum length line, measured as the geographic bearing from the southernmost to the northernmost point, in decimal degrees ($-90^{\circ}$ to $90^{\circ}$). Because the line is always oriented south-to-north, it describes the orientation of an *axis*, not a travel direction: $-90^{\circ}$/ $90^{\circ}$ is east-west, $0^{\circ}$ is north-south.
--   **northerness**: Cosine of bearing: $N = \cos(\text{bearing} \times \frac{\pi}{180})$ (ranges from 0 to 1; 1 = north-south axis, 0 = east-west axis).
--   **ew_length**: Average east-west extent in meters: $EW = \frac{d(NW, NE) + d(SW, SE)}{2}$.
--   **ns_length**: Average north-south extent in meters: $NS = \frac{d(SW, NW) + d(SE, NE)}{2}$.
--   **maxlength**: Maximum distance across the convex hull: $L_{\max} = \max_{p_i, p_j} d(p_i, p_j)$.
+- **bearing**: Axial orientation of the maximum length line, measured as the geographic bearing from the southernmost to the northernmost point, in decimal degrees ($-90^{\circ}$ to $90^{\circ}$). Because the line is always oriented south-to-north, it describes the orientation of an *axis*, not a travel direction: $-90^{\circ}$/ $90^{\circ}$ is east-west, $0^{\circ}$ is north-south.
+- **northerness**: Cosine of bearing: $N = \cos(\text{bearing} \times \frac{\pi}{180})$ (ranges from 0 to 1; 1 = north-south axis, 0 = east-west axis).
+- **ew_length**: Average east-west extent in meters: $EW = \frac{d(NW, NE) + d(SW, SE)}{2}$.
+- **ns_length**: Average north-south extent in meters: $NS = \frac{d(SW, NW) + d(SE, NE)}{2}$.
+- **maxlength**: Maximum distance across the convex hull: $L_{\max} = \max_{p_i, p_j} d(p_i, p_j)$.
 
 #### Geometry Metrics
 
--   **num_holes**: Number of interior holes (rings).
--   **num_polygons**: Number of separate polygon parts (multi-part count).
--   **decimallongitude**: Centroid longitude in decimal degrees.
--   **decimallatitude**: Centroid latitude in decimal degrees.
--   **sinuosity**: Perimeter-to-diameter proxy (perimeter divided by maximum hull distance): $S = \frac{P}{L_{\max}}$.
+- **num_holes**: Number of interior holes (rings).
+- **num_polygons**: Number of separate polygon parts (multi-part count).
+- **decimallongitude**: Centroid longitude in decimal degrees.
+- **decimallatitude**: Centroid latitude in decimal degrees.
+- **sinuosity**: Perimeter-to-diameter proxy (perimeter divided by maximum hull distance): $S = \frac{P}{L_{\max}}$.
 
 ### Geodesic Calculations
 
@@ -103,11 +103,11 @@ Full documentation is available in R:
 
 ## Related Packages
 
--   [**terra**](https://github.com/rspatial/terra): Foundational spatial data handling (required)
--   [**geosphere**](https://CRAN.R-project.org/package=geosphere): Geodetic bearing calculations (required)
--   [**sf**](https://r-spatial.github.io/sf/): Alternative vector format support
--   [**NLMR**](https://github.com/ropensci/NLMR): Neutral landscape models with shape metrics
--   [**landscapemetrics**](https://r-spatialecology.github.io/landscapemetrics/): Comprehensive landscape ecology metrics
+- [**terra**](https://github.com/rspatial/terra): Foundational spatial data handling (required)
+- [**geosphere**](https://CRAN.R-project.org/package=geosphere): Geodetic bearing calculations (required)
+- [**sf**](https://r-spatial.github.io/sf/): Alternative vector format support
+- [**NLMR**](https://github.com/ropensci/NLMR): Neutral landscape models with shape metrics
+- [**landscapemetrics**](https://r-spatialecology.github.io/landscapemetrics/): Comprehensive landscape ecology metrics
 
 ## Citation
 
