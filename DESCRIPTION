@@ -1,7 +1,7 @@
 Package: geomattR
 Type: Package
 Title: Calculate Geometric Attributes of Spatial Polygons
-Version: 0.3.0
+Version: 0.3.1
 Authors@R: 
     person("Gabriel", "Ortega-Solís", , "g.ortega.solis@geomattr.org", role = c("aut", "cre", "cph"),
            comment = c(ORCID = "0000-0002-0516-5694"))
@@ -12,7 +12,6 @@ BugReports: https://github.com/gortegasolis/geomattR/issues
 Encoding: UTF-8
 Depends: R (>= 4.1)
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.3.3
 Imports:
     terra (>= 1.8.70),
     geosphere (>= 1.5.20),
@@ -28,3 +27,4 @@ Suggests:
     rmarkdown (>= 2.30)
 Config/testthat/edition: 3
 VignetteBuilder: knitr
+Config/roxygen2/version: 8.1.0

@@ -184,9 +184,8 @@ library(parallel)
 # Create multiple polygons
 polygons <- rbind(poly1, poly2) # From previous example
 
-# Set up cluster
-n_cores <- detectCores() - 1
-cl <- makeCluster(n_cores)
+# Set up cluster (two workers here; adjust to your machine's resources)
+cl <- makeCluster(2)
 
 # Process in parallel using the main function
 results <- calculate_geometric_attributes(

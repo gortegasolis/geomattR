@@ -178,10 +178,13 @@ result <- calculate_geometric_attributes(polygons,
   metrics = c("area", "perimeter", "compactness")
 )
 
-\dontrun{
-# Parallel processing with an explicit cluster (use small number of cores for checks)
+\donttest{
+# Parallel processing with an explicit cluster. Features are distributed
+# across workers, so the polygon is duplicated to give each worker one.
+# Two workers are used here; adjust to your machine's resources.
+two_polygons <- rbind(polygons, polygons)
 cl <- parallel::makeCluster(2)
-result <- calculate_geometric_attributes(polygons, cl = cl)
+result <- calculate_geometric_attributes(two_polygons, cl = cl)
 parallel::stopCluster(cl)
 }
 }

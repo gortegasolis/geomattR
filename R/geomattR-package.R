@@ -68,5 +68,17 @@
 #' @importFrom methods is
 #' @importFrom geosphere bearing
 #'
-#' @keywords internal
+#' @section Acknowledgment:
+#' This package began as a side project during my time as a technician on
+#' [BEAST – BiodivErsity dynamics Across a continuum of Space, Time, and their scales](https://www.fzp.czu.cz/en/r-9411-projects-and-partnerships/r-9880-projects/r-18897-beast-biodiversity-dynamics-across-a-continuum-of-space-time-and-their-scales),
+#' led by Petr Keil, and was therefore partially funded by the European Union
+#' (ERC, BEAST, grant no. 101044740). Views and opinions expressed are those of
+#' the author(s) only and do not necessarily reflect those of the European
+#' Union or the European Research Council Executive Agency; neither the
+#' European Union nor the granting authority can be held responsible for them.
+#'
+#' Discussions with P. Keil on spatial and geometric problems inspired the
+#' package. G. Ortega-Solís developed all core functions; Claude Code was used
+#' to double-check the code and to help write unit tests.
+#'
 "_PACKAGE"
