@@ -11,13 +11,13 @@ Source:
 [`inst/CITATION`](https://github.com/gortegasolis/geomattR/blob/main/inst/CITATION)
 
 Ortega-Solís G (2026). *geomattR: Calculate Geometric Attributes of
-Spatial Polygons*. R package version 0.3.0,
+Spatial Polygons*. R package version 0.3.1,
 <https://github.com/gortegasolis/geomattR>.
 
     @Manual{,
       title = {geomattR: Calculate Geometric Attributes of Spatial Polygons},
       author = {Gabriel Ortega-Solís},
       year = {2026},
-      note = {R package version 0.3.0},
+      note = {R package version 0.3.1},
       url = {https://github.com/gortegasolis/geomattR},
     }

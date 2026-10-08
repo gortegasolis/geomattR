@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">geomattR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -33,6 +33,12 @@
       <small>Source: <a href="https://github.com/gortegasolis/geomattR/blob/main/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.3.1" id="geomattr-031">geomattR 0.3.1<a class="anchor" aria-label="anchor" href="#geomattr-031"></a></h2>
+<p>CRAN resubmission. No user-visible changes to package functionality.</p>
+<ul><li>The parallel-processing example in <code><a href="../reference/calculate_geometric_attributes.html">calculate_geometric_attributes()</a></code> is now wrapped in <code>\donttest{}</code> instead of <code>\dontrun{}</code>, and operates on two features so that the cluster code path is genuinely exercised.</li>
+<li>All examples and vignette code now use at most two cluster workers. The vignette no longer derives a worker count from <code><a href="https://rdrr.io/r/parallel/detectCores.html" class="external-link">parallel::detectCores()</a></code>.</li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.3.0" id="geomattr-030">geomattR 0.3.0<a class="anchor" aria-label="anchor" href="#geomattr-030"></a></h2>
 <p>Accuracy improvements for geodesic workflows. <strong>Values of <code>reock</code>, <code>elongation_rectangle</code> and <code>maxlength</code> may change</strong> for lon/lat input, especially at high latitudes:</p>

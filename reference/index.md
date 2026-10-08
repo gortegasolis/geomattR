@@ -8,5 +8,8 @@
   : Calculate Polygon Extent
 - [`calculate_geometric_attributes()`](https://gortegasolis.github.io/geomattR/reference/calculate_geometric_attributes.md)
   : Calculate Geometric Attributes of Spatial Polygons
+- [`geomattR`](https://gortegasolis.github.io/geomattR/reference/geomattR-package.md)
+  [`geomattR-package`](https://gortegasolis.github.io/geomattR/reference/geomattR-package.md)
+  : geomattR: Calculate Geometric Attributes of Spatial Polygons
 - [`get_distant_points()`](https://gortegasolis.github.io/geomattR/reference/get_distant_points.md)
   : Find largest distance between a pair of opposite vertices

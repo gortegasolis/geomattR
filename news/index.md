@@ -1,5 +1,17 @@
 # Changelog
 
+## geomattR 0.3.1
+
+CRAN resubmission. No user-visible changes to package functionality.
+
+- The parallel-processing example in
+  [`calculate_geometric_attributes()`](https://gortegasolis.github.io/geomattR/reference/calculate_geometric_attributes.md)
+  is now wrapped in `\donttest{}` instead of `\dontrun{}`, and operates
+  on two features so that the cluster code path is genuinely exercised.
+- All examples and vignette code now use at most two cluster workers.
+  The vignette no longer derives a worker count from
+  [`parallel::detectCores()`](https://rdrr.io/r/parallel/detectCores.html).
+
 ## geomattR 0.3.0
 
 Accuracy improvements for geodesic workflows. **Values of `reock`,
